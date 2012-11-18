@@ -1,0 +1,130 @@
+--- /root/CM10_original/packages/apps/Mms/src/com/android/mms/transaction/HttpUtils.java	2012-11-02 12:34:54.757571187 +0545
++++ pang/packages/apps/Mms/src/com/android/mms/transaction/HttpUtils.java	2012-11-03 20:53:25.733287010 +0545
+@@ -32,14 +32,14 @@ import org.apache.http.Header;
+ 
+ import com.android.mms.MmsConfig;
+ import com.android.mms.LogTag;
+-
+ import android.content.Context;
++
+ import android.net.http.AndroidHttpClient;
++
+ import android.telephony.TelephonyManager;
+ import android.text.TextUtils;
+ import android.util.Config;
+ import android.util.Log;
+-
+ import java.io.ByteArrayOutputStream;
+ import java.io.DataInputStream;
+ import java.io.InputStream;
+@@ -49,6 +49,22 @@ import java.net.URI;
+ import java.net.URISyntaxException;
+ import java.util.Locale;
+ 
++
++//-------------------------------------------------
++import com.android.internal.telephony.Phone;
++import android.net.Uri;
++import android.database.Cursor;
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.provider.Telephony;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++//-------------------------------------------------
++
++
+ public class HttpUtils {
+     private static final String TAG = LogTag.TRANSACTION;
+ 
+@@ -65,7 +81,55 @@ public class HttpUtils {
+     // setting, this should no longer be static.  We should call
+     // getHttpAcceptLanguage instead.
+     private static final String HDR_VALUE_ACCEPT_LANGUAGE;
++    
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------
++    private static PrivacySettingsManager pSetMan;
++  	
++    private static class APNInfo{
++    	public String MMSCenterUrl;
++        public String MMSPort;
++        public String MMSProxy;
++        
++        public APNInfo(){
++        	//init to prevent nullpointer exception
++        	MMSCenterUrl = "";
++        	MMSPort = "";
++        	MMSProxy = "";
++        }
++    }
++    
++    private static List<APNInfo> getAPN(Context context){
++    	 final Cursor apnCursor = context.getContentResolver().query(Uri.withAppendedPath(Telephony.Carriers.CONTENT_URI, "current"), null, null, null, null);
++    	 if (apnCursor == null) {
++    	         return Collections.emptyList();
++	     } else {
++	         final List<APNInfo> results = new ArrayList<APNInfo>(); 
++	         if (apnCursor.moveToFirst()) {
++    	         do{
++    	             final String type = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.TYPE));
++    	             if (!TextUtils.isEmpty(type) && ( type.equalsIgnoreCase(Phone.APN_TYPE_ALL) || type.equalsIgnoreCase(Phone.APN_TYPE_MMS))) {
++    	                 final String mmsc = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSC));
++    	                 final String mmsProxy = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPROXY));
++    	                 final String port = apnCursor.getString(apnCursor.getColumnIndex(Telephony.Carriers.MMSPORT));                  
++    	                 final APNInfo apn = new APNInfo();
++    	                 apn.MMSCenterUrl = mmsc;
++    	                 apn.MMSProxy = mmsProxy;
++    	                 apn.MMSPort = port;
++    	                 results.add(apn);
++    	             }
++    	         } while (apnCursor.moveToNext()); 
++	         }              
++	         apnCursor.close();
++	         return results;
++	     }
++    }
++    
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------
+ 
++    
++    
+     static {
+         HDR_VALUE_ACCEPT_LANGUAGE = getCurrentAcceptLanguage(Locale.getDefault());
+     }
+@@ -116,7 +180,30 @@ public class HttpUtils {
+         }
+ 
+         AndroidHttpClient client = null;
+-
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
++    	if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	final List<APNInfo> apn = getAPN(context);
++    	boolean isMMSTransaction = false;
++    	APNInfo tmp;
++    	for(int i = 0; i < apn.size(); i++){
++    		tmp = apn.get(i);
++    		if(tmp.MMSProxy.equals(proxyHost) || tmp.MMSPort.equals(String.valueOf(proxyPort)) || tmp.MMSCenterUrl.equals(url)){
++    			isMMSTransaction = true;
++    			break;
++    		}
++    	}
++    	if(isMMSTransaction){
++	    	PrivacySettings settings = pSetMan.getSettings(context.getPackageName());
++	    	if(settings != null && settings.getSendMmsSetting() != PrivacySettings.REAL){
++	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.EMPTY, PrivacySettings.DATA_SEND_MMS, null, null);
++	    		throw new IOException("401");
++	    	} else{
++	    		pSetMan.notification(context.getPackageName(), 0, PrivacySettings.REAL, PrivacySettings.DATA_SEND_MMS, null, null);
++	    	}
++    	}
++    	//-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
++        
+         try {
+             // Make sure to use a proxy which supports CONNECT.
+             URI hostUrl = new URI(url);

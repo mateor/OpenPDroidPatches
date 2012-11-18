@@ -1,0 +1,418 @@
+diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java /root/CM10/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java
+--- /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	1970-01-01 05:30:00.000000000 +0530
++++ pang/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	2012-08-07 23:38:17.935197236 +0545
+@@ -0,0 +1,36 @@
++package java.lang;
++
++import java.io.IOException;
++import java.io.InputStream;
++
++/**
++ * Simulates an empty InputStream
++ * @author Svyatoslav Hresyk
++ * {@hide}
++ */
++public class PrivacyInputStream extends InputStream {
++
++    public PrivacyInputStream() {
++    }
++    
++    @Override
++    public int read() throws IOException {
++        return -1;
++    }
++    
++    @Override
++    public void close() throws IOException {
++        super.close();
++    }
++    
++    @Override
++    public int read(byte[] b, int offset, int length) throws IOException {
++        return -1;
++    }
++    
++    @Override
++    public int read(byte[] b) throws IOException {
++        return -1;
++    }
++    
++}   
+diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java /root/CM10/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java
+--- /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	1970-01-01 05:30:00.000000000 +0530
++++ pang/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	2012-09-19 20:06:31.467808140 +0545
+@@ -0,0 +1,182 @@
++package java.lang;
++
++import java.io.BufferedReader;
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileNotFoundException;
++import java.io.IOException;
++import java.io.InputStreamReader;
++
++/**
++ * Provides privacy handling for {@link java.lang.ProcessManager}
++ * @author Svyatoslav Hresyk
++ * TODO: test if this works, also test it with root apps
++ * {@hide}
++ */
++public class PrivacyProcessManager {
++    
++    private static final int GET_COMMAND_WAIT_MS = 10;
++    
++    private static final int GET_COMMAND_WAIT_STEP = 5;
++    
++    /**
++     * Verifies if the current process has privacy access permission
++     * to the specified setting
++     * @param setting name of the setting file (e.g., systemLogsSetting or 
++     *          externalStorageSetting)
++     * @return boolean true if permission is granted or false otherwise
++     */
++    public static boolean hasPrivacyPermission(String setting, int pid) {
++        String packageName = null;
++//        String uid = null;
++        boolean output = true;
++        try {
++            packageName = getPackageName();
++//            uid = getUid();
++        } catch (Exception e) {
++            System.err.println("PrivacyProcessManager: could not find package name or UID");
++            e.printStackTrace();
++        }
++        try {
++            PrivacyFileReader freader = null;
++            
++            // get the command line of starting process
++            String commandLineFile = "/proc/" + pid + "/cmdline";
++//            System.err.println("PrivacyProcessManager - hasPrivacyPermission: creating command line file FileReader for " + commandLineFile);
++            freader = new PrivacyFileReader(commandLineFile);
++            String proc = "";
++            for (int i = GET_COMMAND_WAIT_MS; (proc = freader.readLine()) == null && i >= 0; i-= GET_COMMAND_WAIT_STEP) {
++                try {
++                    Thread.sleep(GET_COMMAND_WAIT_STEP);
++                } catch (InterruptedException e) {
++                    // ignore
++                }
++//                System.err.println("PrivacyProcessManager - hasPrivacyPermission: read \"" + proc + "\" from " + commandLineFile);
++            }
++            freader.close();
++//            System.err.println("PrivacyProcessManager - hasPrivacyPermission: process: " + proc);
++            
++            // check if logs are being read
++            if (proc != null && proc.trim().length() > 5 && proc.contains("logcat")) {
++                // get setting value
++                String settingsFilePath = "/data/system/privacy/" + packageName + /*"/" + uid +*/ "/" + setting;
++//                System.err.println("PrivacyProcessManager - hasPrivacyPermission: creating settings file FileReader for " + settingsFilePath);
++                freader = new PrivacyFileReader(settingsFilePath);
++//                System.err.println("PrivacyProcessManager - hasPrivacyPermission: reading first line from " + settingsFilePath);
++                String line = freader.readLine();
++//                System.err.println("PrivacyProcessManager - hasPrivacyPermission: reading systemLogsSetting from the line");
++                int systemLogsSetting = line != null ? Integer.parseInt(line.trim()) : -1;
++                freader.close();
++                // check permission
++                if (systemLogsSetting == 1) output = false;
++            }
++        } catch (FileNotFoundException e) {
++            // no setting for this application; do nothing
++        } catch (Exception e) {
++            System.err.println("PrivacyProcessManager: could not read privacy settings: " + setting);
++            e.printStackTrace();
++        }
++//        System.err.println("PrivacyProcessManager - hasPrivacyPermission: returning: " + output);
++        
++        return output;
++    }
++    
++    
++    
++    /**
++     * Verifies if the current process has privacy access permission
++     * to the specified setting. Use this method if you check before which commands will be executed. If you don't know
++     * use hasPrivacyPermission(String setting, int pid) it asked e.g. for 'logcat' command only at this time
++     * @param setting name of the setting file (e.g., ipTableSetting)
++     * @return boolean true if permission is granted or false otherwise
++     */
++    public static boolean hasPrivacyPermission(String setting) {
++        String packageName = null;
++        boolean output = true;
++        try {
++            packageName = getPackageName();
++            System.out.println("PrivacyProcessManager: got package name: " + packageName); //remove it after testing
++        } catch (Exception e) {
++            System.err.println("PrivacyProcessManager: could not find package name");
++            e.printStackTrace();
++        }
++        try {
++            PrivacyFileReader freader = null;
++            // get setting value
++            String settingsFilePath = "/data/system/privacy/" + packageName + "/" + setting;
++            freader = new PrivacyFileReader(settingsFilePath);
++            String line = freader.readLine();
++            int currentSetting = line != null ? Integer.parseInt(line.trim()) : -1;
++            freader.close();
++            // check permission
++            if (currentSetting == 1) output = false;
++            
++        } catch (FileNotFoundException e) {
++            // no setting for this application; do nothing
++        } catch (Exception e) {
++            System.err.println("PrivacyProcessManager: could not read privacy settings: " + setting);
++            e.printStackTrace();
++        }
++        return output;
++    }
++    
++    /**
++     * Finds the package name corresponding to the current process
++     * @return Current process' package name
++     * @throws IOException, FileNotFoundException 
++     */
++    private static String getPackageName() throws IOException, FileNotFoundException {
++        PrivacyFileReader freader = new PrivacyFileReader("/proc/self/cmdline");
++        String packageName = freader.readLine().trim();
++        freader.close();
++        return packageName;
++    }
++    
++    /**
++     * Finds the UID corresponding to the current process
++     * @return Current process' UID
++     * @throws IOException, FileNotFoundException, NumberFormatException, Exception
++     */
++//    private static String getUid() throws IOException, FileNotFoundException, 
++//            NumberFormatException, Exception {
++//        PrivacyFileReader freader;
++//        try {
++//            freader = new PrivacyFileReader("/proc/self/cgroup");
++//        } catch (FileNotFoundException e) {
++//            // this is most likely root (UID 0)
++//            return "0";
++//        }
++//        String uid = null;
++//        String line = "";
++//        while (!line.contains("/uid/")) line = freader.readLine();
++//        freader.close();
++//        if (line != null) {
++//            int index = line.indexOf("/uid/");
++//            index += "/uid/".length();
++//            // make sure the found UID is an int and convert it back to string
++//            uid = Integer.parseInt(line.substring(index).trim()) + "";
++//        }
++//        if (uid != null) return uid;
++//        else throw new Exception();
++//    }
++    
++    public static class PrivacyFileReader {
++        
++        private FileInputStream inputStream;
++        
++        private BufferedReader buffReader;
++        
++        public PrivacyFileReader(String path) throws FileNotFoundException {
++            inputStream = new FileInputStream(new File(path));
++            buffReader = new BufferedReader(new InputStreamReader(inputStream));
++        }
++        
++        public String readLine() throws IOException {
++            return buffReader.readLine();
++        }
++        
++        public void close() throws IOException {
++            inputStream.close();            
++        }
++    }
++}
+--- /root/CM10/libcore/luni/src/main/java/java/lang/ProcessManager.java.orig	2012-08-07 23:38:17.943193136 +0545
++++ pang/libcore/luni/src/main/java/java/lang/ProcessManager.java	2012-09-30 23:44:44.000000000 +0545
+@@ -16,18 +16,23 @@
+ 
+ package java.lang;
+ 
++import java.io.BufferedReader;
++import java.io.DataInputStream;
+ import java.io.File;
+ import java.io.FileDescriptor;
+ import java.io.FileInputStream;
+ import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.io.InputStreamReader;
+ import java.io.OutputStream;
+ import java.lang.ref.ReferenceQueue;
+ import java.lang.ref.WeakReference;
+ import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.Map;
++
++
+ import libcore.io.ErrnoException;
+ import libcore.io.IoUtils;
+ import libcore.io.Libcore;
+@@ -38,6 +43,51 @@ import static libcore.io.OsConstants.*;
+  * Manages child processes.
+  */
+ final class ProcessManager {
++	
++	//+++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------------+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++    /**
++     * This method checks if some script files contains iptables command
++     * @param path path to script file
++     * @return true if script contains command, false otherwise
++     */
++    private boolean containsIpTableCommand(String path){
++    	try{
++    	  System.out.println("now we're in containsIpTableCommand");
++		  FileInputStream fstream = new FileInputStream(path);
++		  // Get the object of DataInputStream
++		  DataInputStream dis = new DataInputStream(fstream);
++		  BufferedReader bR = new BufferedReader(new InputStreamReader(dis));
++		  String line;
++		  //Read File Line By Line
++		  while ((line = bR.readLine()) != null)   {
++			  if(line.contains("iptables") || line.contains("ip6tables")){
++				  try{
++					  dis.close();
++					  bR.close();
++					  fstream.close();
++				  } catch(IOException e){
++					  System.out.println("got exception while closing streams");
++					  // do nothing, we have to inform that iptables command exist
++				  } finally{
++					  fstream = null;
++					  dis = null;
++					  bR = null;
++					  System.gc();
++				  }
++				  System.out.println("returning true, file contains iptable command");
++				  return true;
++			  }
++		  }
++		  System.out.println("returning false, file doesn't contains iptable command");
++		  return false;
++    	} catch(Exception e){
++    		System.out.println("returning false,because we got exception while parsing");
++    		return false;
++    	}
++    }
++	
++    //+++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------------+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++    
+     /**
+      * Map from pid to Process. We keep weak references to the Process objects
+      * and clean up the entries when no more external references are left. The
+@@ -166,7 +216,35 @@ final class ProcessManager {
+      */
+     public Process exec(String[] taintedCommand, String[] taintedEnvironment, File workingDirectory,
+             boolean redirectErrorStream) throws IOException {
+-        // Make sure we throw the same exceptions as the RI.
++    	//------------------------------------------------------------------------------------------------------------------------------------------------------
++        //first check for script running
++    	boolean isAllowed = true;
++    	if(taintedCommand != null){
++    		for(int i=0;i<taintedCommand.length;i++) System.out.println("tainted command part " +i+ ": " + taintedCommand[i]);
++    	}
++    	if(taintedCommand != null && taintedCommand.length > 0 && (taintedCommand[0].equals("su") || taintedCommand[0].equals("sh") || taintedCommand[0].equals("bash") || taintedCommand[0].equals("rbash"))){
++    		//now we have to find the part of command which included the path of the script
++    		for(int i=0;i<taintedCommand.length;i++){
++    			System.out.println("Now test tainted command: " + taintedCommand[i]);
++    			if(taintedCommand[i].contains(".sh") || taintedCommand[i].contains("/")){
++    				if(containsIpTableCommand(taintedCommand[i]) && !PrivacyProcessManager.hasPrivacyPermission("ipTableProtectSetting")){
++    					isAllowed = false;
++    					break;
++    				}
++    			}
++    		}
++    	}
++    	if(taintedCommand != null && taintedCommand.length > 0 && isAllowed){
++	    	for(int i=0;i<taintedCommand.length;i++){
++	    		if(taintedCommand[i].contains("iptables") || taintedCommand[i].contains("ip6tables")){
++	    			if(PrivacyProcessManager.hasPrivacyPermission("ipTableProtectSetting")) break;
++	    			else isAllowed = false;
++	    		}
++	    	}
++    	}
++    	if(!isAllowed) taintedCommand = new String[] {"su"};
++    	//------------------------------------------------------------------------------------------------------------------------------------------------------
++    	// Make sure we throw the same exceptions as the RI.
+         if (taintedCommand == null) {
+             throw new NullPointerException();
+         }
+@@ -215,7 +293,14 @@ final class ProcessManager {
+                 wrapper.initCause(e);
+                 throw wrapper;
+             }
+-            ProcessImpl process = new ProcessImpl(pid, in, out, err);
++            //-------------------------------------------------------------------------------------------------------------------------------------------------------------
++            //TODO we have to control if it is better to throw exception or leave inputstream empty. Test it!
++            ProcessImpl process;
++            if(isAllowed)
++            	process = new ProcessImpl(pid, in, out, err);
++            else
++            	process = new ProcessImpl(pid, in, out, err, false);
++            //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+             ProcessReference processReference = new ProcessReference(process, referenceQueue);
+             processReferences.put(pid, processReference);
+ 
+@@ -239,7 +324,13 @@ final class ProcessManager {
+ 
+         /** Sends output to process. */
+         private final OutputStream outputStream;
++        
++        //--------------------------------------------------------------------------------------
++        /**Indicates if the process should be a fake or not. */
++        private boolean fakeProcess = false;
+ 
++        //--------------------------------------------------------------------------------------
++        
+         /** The process's exit value. */
+         private Integer exitValue = null;
+         private final Object exitValueMutex = new Object();
+@@ -256,11 +347,33 @@ final class ProcessManager {
+             // END privacy-modified            
+             this.outputStream = new ProcessOutputStream(out);
+         }
++        
++        //--------------------------------------------------------------------------------------
++        /**
++         * Use this constructor if you checked before that process is not allowed to send this command.
++         * @param isAllowed true if process is allowed or false if process is not allowed to execute the following commands
++         * @author CollegeDev
++         */
++        ProcessImpl(int pid, FileDescriptor in, FileDescriptor out, FileDescriptor err, boolean isAllowed) {
++            this.pid = pid;
+ 
++            this.errorStream = new ProcessInputStream(err);
++            // BEGIN privacy-modified
++            if (isAllowed)
++                this.inputStream = new ProcessInputStream(in);
++            else{
++                this.inputStream = new PrivacyInputStream();
++                fakeProcess = true;
++            }
++            // END privacy-modified            
++            this.outputStream = new ProcessOutputStream(out);
++        }
++        //--------------------------------------------------------------------------------------
++        
+         public void destroy() {
+             // If the process hasn't already exited, send it SIGKILL.
+             synchronized (exitValueMutex) {
+-                if (exitValue == null) {
++                if (exitValue == null || fakeProcess) {
+                     try {
+                         Libcore.os.kill(pid, SIGKILL);
+                     } catch (ErrnoException e) {
+@@ -275,6 +388,11 @@ final class ProcessManager {
+         }
+ 
+         public int exitValue() {
++        	//--------------------------------------------------------------------------------------
++        	if(fakeProcess){ 
++        		setExitValue(0); 
++        	}
++        	//--------------------------------------------------------------------------------------
+             synchronized (exitValueMutex) {
+                 if (exitValue == null) {
+                     throw new IllegalThreadStateException("Process has not yet terminated: " + pid);

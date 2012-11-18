@@ -1,0 +1,31 @@
+--- AOSP/build/core/java.mk	2012-07-21 11:06:59.810792134 -0700
++++ pang/build/core/java.mk	2012-07-13 08:59:33.000000000 -0700
+@@ -40,7 +40,7 @@ ifneq ($(LOCAL_SDK_VERSION),)
+   endif
+ else
+   ifneq ($(LOCAL_NO_STANDARD_LIBRARIES),true)
+-    LOCAL_JAVA_LIBRARIES := core core-junit ext framework $(LOCAL_JAVA_LIBRARIES)
++    LOCAL_JAVA_LIBRARIES := core core-junit ext framework framework2 $(LOCAL_JAVA_LIBRARIES)
+   endif
+ endif
+ 
+--- AOSP/build/core/user_tags.mk	2012-07-21 11:06:59.815793323 -0700
++++ pang/build/core/user_tags.mk	2012-07-13 08:59:33.000000000 -0700
+@@ -123,6 +123,7 @@ GRANDFATHERED_USER_MODULES += \
+ 	exc_dump \
+ 	fastboot \
+ 	framework \
++	framework2 \
+ 	FrameworkCoreHostTests \
+ 	frameworks-core-util-lib \
+ 	fsck_msdos \
+--- AOSP/build/target/product/core.mk	2012-07-21 22:05:15.867104497 -0700
++++ pang/build/target/product/core.mk	2012-07-14 19:40:28.684437645 -0700
+@@ -62,6 +58,7 @@ PRODUCT_PACKAGES := \
+     drmserver \
+     dx \
+     ext \
++    framework2 \
+     framework-res \
+     hprof-conv \
+     icu.dat \
