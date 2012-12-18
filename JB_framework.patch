@@ -1,7 +1,7 @@
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/Android.mk pang/frameworks/base/Android.mk
---- /root/CM10_original/frameworks/base/Android.mk	2012-11-02 12:33:18.554907223 +0545
-+++ pang/frameworks/base/Android.mk	2012-11-03 19:14:46.761221765 +0545
-@@ -74,6 +78,7 @@ LOCAL_SRC_FILES := $(filter-out \
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/Android.mk nexus_4.2/frameworks/base/Android.mk
+--- 4.2.1_orig/frameworks/base/Android.mk	2012-12-11 13:23:36.000000000 +1100
++++ nexus_4.2/frameworks/base/Android.mk	2012-12-11 15:02:36.000000000 +1100
+@@ -57,6 +57,7 @@ LOCAL_SRC_FILES := $(filter-out \
  ## across process boundaries.
  ##
  ## READ ME: ########################################################
@@ -9,7 +9,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  LOCAL_SRC_FILES += \
  	core/java/android/accessibilityservice/IAccessibilityServiceConnection.aidl \
  	core/java/android/accessibilityservice/IAccessibilityServiceClient.aidl \
-@@ -218,6 +223,7 @@ LOCAL_SRC_FILES += \
+@@ -213,6 +214,7 @@ LOCAL_SRC_FILES += \
  	media/java/android/media/IRemoteControlDisplay.aidl \
  	media/java/android/media/IRemoteVolumeObserver.aidl \
  	media/java/android/media/IRingtonePlayer.aidl \
@@ -17,7 +17,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  	telephony/java/com/android/internal/telephony/IPhoneStateListener.aidl \
  	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
  	telephony/java/com/android/internal/telephony/ITelephony.aidl \
-@@ -232,6 +238,7 @@ LOCAL_SRC_FILES += \
+@@ -225,6 +227,7 @@ LOCAL_SRC_FILES += \
  	voip/java/android/net/sip/ISipSessionListener.aidl \
  	voip/java/android/net/sip/ISipService.aidl
  #
@@ -25,7 +25,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
  
  # FRAMEWORKS_BASE_JAVA_SRC_DIRS comes from build/core/pathmap.mk
-@@ -275,6 +282,7 @@ framework_built += $(call java-lib-deps,
+@@ -264,6 +267,7 @@ framework_built := $(call java-lib-deps,
  # AIDL files to be preprocessed and included in the SDK,
  # relative to the root of the build tree.
  # ============================================================
@@ -33,23 +33,24 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  aidl_files := \
  	frameworks/base/core/java/android/accounts/IAccountManager.aidl \
  	frameworks/base/core/java/android/accounts/IAccountManagerResponse.aidl \
-@@ -322,11 +330,13 @@ aidl_files := \
- 	frameworks/base/graphics/java/android/graphics/Region.aidl \
- 	frameworks/base/location/java/android/location/Criteria.aidl \
- 	frameworks/base/location/java/android/location/Location.aidl \
-+	frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl \
+@@ -313,11 +317,14 @@ aidl_files := \
+ 	frameworks/base/location/java/android/location/LocationRequest.aidl \
+ 	frameworks/base/location/java/com/android/internal/location/ProviderProperties.aidl \
+ 	frameworks/base/location/java/com/android/internal/location/ProviderRequest.aidl \
++        frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl \
  	frameworks/base/telephony/java/android/telephony/ServiceState.aidl \
  	frameworks/base/telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
  	frameworks/base/telephony/java/com/android/internal/telephony/ITelephony.aidl \
  
  gen := $(TARGET_OUT_COMMON_INTERMEDIATES)/framework.aidl
 +# END privacy-added: PrivacySettings.aidl
++
  $(gen): PRIVATE_SRC_FILES := $(aidl_files)
  ALL_SDK_FILES += $(gen)
  $(gen): $(aidl_files) | $(AIDL)
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/app/ContextImpl.java pang/frameworks/base/core/java/android/app/ContextImpl.java
---- /root/CM10_original/frameworks/base/core/java/android/app/ContextImpl.java	2012-11-02 12:33:18.810776004 +0545
-+++ pang/frameworks/base/core/java/android/app/ContextImpl.java	2012-10-12 00:14:09.614349858 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/app/ContextImpl.java nexus_4.2/frameworks/base/core/java/android/app/ContextImpl.java
+--- 4.2.1_orig/frameworks/base/core/java/android/app/ContextImpl.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/app/ContextImpl.java	2012-12-11 15:02:36.000000000 +1100
 @@ -61,7 +61,7 @@ import android.location.ILocationManager
  import android.location.LocationManager;
  import android.media.AudioManager;
@@ -59,7 +60,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  import android.net.IConnectivityManager;
  import android.net.INetworkPolicyManager;
  import android.net.NetworkPolicyManager;
-@@ -107,6 +107,16 @@ import android.accounts.IAccountManager;
+@@ -111,6 +111,16 @@ import android.accounts.IAccountManager;
  import android.app.admin.DevicePolicyManager;
  import com.android.internal.os.IDropBoxManagerService;
  
@@ -76,7 +77,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  import java.io.File;
  import java.io.FileInputStream;
  import java.io.FileNotFoundException;
-@@ -163,6 +173,9 @@ class ContextImpl extends Context {
+@@ -179,6 +189,9 @@ class ContextImpl extends Context {
      private Resources mResources;
      /*package*/ ActivityThread mMainThread;
      private Context mOuterContext;
@@ -86,7 +87,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      private IBinder mActivityToken = null;
      private ApplicationContentResolver mContentResolver;
      private int mThemeResource = 0;
-@@ -276,7 +289,10 @@ class ContextImpl extends Context {
+@@ -294,7 +307,10 @@ class ContextImpl extends Context {
                  public Object createService(ContextImpl ctx) {
                      IBinder b = ServiceManager.getService(ACCOUNT_SERVICE);
                      IAccountManager service = IAccountManager.Stub.asInterface(b);
@@ -98,7 +99,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }});
  
          registerService(ACTIVITY_SERVICE, new ServiceFetcher() {
-@@ -310,7 +326,11 @@ class ContextImpl extends Context {
+@@ -333,7 +349,11 @@ class ContextImpl extends Context {
          registerService(CONNECTIVITY_SERVICE, new StaticServiceFetcher() {
                  public Object createStaticService() {
                      IBinder b = ServiceManager.getService(CONNECTIVITY_SERVICE);
@@ -111,7 +112,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }});
  
          registerService(COUNTRY_DETECTOR, new StaticServiceFetcher() {
-@@ -370,8 +390,15 @@ class ContextImpl extends Context {
+@@ -399,8 +419,15 @@ class ContextImpl extends Context {
  
          registerService(LOCATION_SERVICE, new ServiceFetcher() {
                  public Object createService(ContextImpl ctx) {
@@ -129,7 +130,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }});
  
          registerService(NETWORK_POLICY_SERVICE, new ServiceFetcher() {
-@@ -441,7 +468,10 @@ class ContextImpl extends Context {
+@@ -471,7 +498,10 @@ class ContextImpl extends Context {
  
          registerService(TELEPHONY_SERVICE, new ServiceFetcher() {
                  public Object createService(ContextImpl ctx) {
@@ -141,22 +142,22 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }});
  
          registerService(THROTTLE_SERVICE, new StaticServiceFetcher() {
-@@ -478,7 +508,10 @@ class ContextImpl extends Context {
+@@ -508,7 +538,10 @@ class ContextImpl extends Context {
                  public Object createService(ContextImpl ctx) {
                      IBinder b = ServiceManager.getService(WIFI_SERVICE);
                      IWifiManager service = IWifiManager.Stub.asInterface(b);
--                    return new WifiManager(service, ctx.mMainThread.getHandler());
-+                    //return new WifiManager(service, ctx.mMainThread.getHandler());
-+		    // BEGIN privacy
-+		    return new PrivacyWifiManager(service, ctx.mMainThread.getHandler(), ctx);
+-                    return new WifiManager(ctx.getOuterContext(), service);
++                    //return new WifiManager(ctx.getOuterContext(), service);
++                    // BEGIN privacy
++                    return new PrivacyWifiManager(ctx.getOuterContext(), service);
 +                    // END privacy
                  }});
  
          registerService(WIFI_P2P_SERVICE, new ServiceFetcher() {
-@@ -503,6 +536,14 @@ class ContextImpl extends Context {
-                 public Object createService(ContextImpl ctx) {
-                     return WimaxHelper.createWimaxService(ctx, ctx.mMainThread.getHandler());
+@@ -518,6 +551,15 @@ class ContextImpl extends Context {
+                     return new WifiP2pManager(service);
                  }});
+ 
 +        // BEGIN privacy-added
 +        registerService("privacy", new StaticServiceFetcher() {
 +                public Object createStaticService() {
@@ -165,10 +166,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +                    return new PrivacySettingsManager(getStaticOuterContext(),service);
 +                }});
 +        // END privacy-added
-     }
- 
-     static ContextImpl getImpl(Context context) {
-@@ -1570,7 +1611,7 @@ class ContextImpl extends Context {
++
+         registerService(WINDOW_SERVICE, new ServiceFetcher() {
+                 public Object getService(ContextImpl ctx) {
+                     Display display = ctx.mDisplay;
+@@ -1834,7 +1876,7 @@ class ContextImpl extends Context {
      }
  
      ContextImpl() {
@@ -177,16 +179,16 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      }
  
      /**
-@@ -1585,7 +1626,7 @@ class ContextImpl extends Context {
-         mResources = context.mResources;
-         mMainThread = context.mMainThread;
+@@ -1851,7 +1893,7 @@ class ContextImpl extends Context {
          mContentResolver = context.mContentResolver;
+         mUser = context.mUser;
+         mDisplay = context.mDisplay;
 -        mOuterContext = this;
 +        sOuterContext = mOuterContext = this;
      }
  
-     final void init(LoadedApk packageInfo,
-@@ -1645,13 +1686,17 @@ class ContextImpl extends Context {
+     final void init(LoadedApk packageInfo, IBinder activityToken, ActivityThread mainThread) {
+@@ -1907,13 +1949,17 @@ class ContextImpl extends Context {
      }
  
      final void setOuterContext(Context context) {
@@ -205,10 +207,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      final IBinder getActivityToken() {
          return mActivityToken;
      }
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/app/Instrumentation.java pang/frameworks/base/core/java/android/app/Instrumentation.java
---- /root/CM10_original/frameworks/base/core/java/android/app/Instrumentation.java	2012-11-02 12:33:18.814773954 +0545
-+++ pang/frameworks/base/core/java/android/app/Instrumentation.java	2012-11-03 18:41:13.457713079 +0545
-@@ -47,6 +47,13 @@ import java.io.File;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/app/Instrumentation.java nexus_4.2/frameworks/base/core/java/android/app/Instrumentation.java
+--- 4.2.1_orig/frameworks/base/core/java/android/app/Instrumentation.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/app/Instrumentation.java	2012-12-11 15:02:36.000000000 +1100
+@@ -48,6 +48,13 @@ import java.io.File;
  import java.util.ArrayList;
  import java.util.List;
  
@@ -222,7 +224,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
  /**
   * Base class for implementing application instrumentation code.  When running
-@@ -87,6 +94,10 @@ public class Instrumentation {
+@@ -88,6 +95,10 @@ public class Instrumentation {
      private boolean mAutomaticPerformanceSnapshots = false;
      private PerformanceCollector mPerformanceCollector;
      private Bundle mPerfMetrics = new Bundle();
@@ -233,7 +235,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
      public Instrumentation() {
      }
-@@ -1390,6 +1401,55 @@ public class Instrumentation {
+@@ -1391,6 +1402,55 @@ public class Instrumentation {
              Context who, IBinder contextThread, IBinder token, Activity target,
              Intent intent, int requestCode, Bundle options) {
          IApplicationThread whoThread = (IApplicationThread) contextThread;
@@ -289,7 +291,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mActivityMonitors != null) {
              synchronized (mSync) {
                  final int N = mActivityMonitors.size();
-@@ -1405,6 +1465,14 @@ public class Instrumentation {
+@@ -1406,6 +1466,14 @@ public class Instrumentation {
                  }
              }
          }
@@ -304,9 +306,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          try {
              intent.setAllowFds(false);
              intent.migrateExtraStreamToClipData();
-@@ -1430,6 +1498,66 @@ public class Instrumentation {
-     public void execStartActivities(Context who, IBinder contextThread,
-             IBinder token, Activity target, Intent[] intents, Bundle options) {
+@@ -1446,6 +1514,66 @@ public class Instrumentation {
+             IBinder token, Activity target, Intent[] intents, Bundle options,
+             int userId) {
          IApplicationThread whoThread = (IApplicationThread) contextThread;
 +        //--------------------------------------------------------------------------------------------------------------------------------------------------------
 +        boolean isAllowed = true;
@@ -371,7 +373,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mActivityMonitors != null) {
              synchronized (mSync) {
                  final int N = mActivityMonitors.size();
-@@ -1489,6 +1617,50 @@ public class Instrumentation {
+@@ -1506,6 +1634,50 @@ public class Instrumentation {
          Context who, IBinder contextThread, IBinder token, Fragment target,
          Intent intent, int requestCode, Bundle options) {
          IApplicationThread whoThread = (IApplicationThread) contextThread;
@@ -422,7 +424,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mActivityMonitors != null) {
              synchronized (mSync) {
                  final int N = mActivityMonitors.size();
-@@ -1504,6 +1676,14 @@ public class Instrumentation {
+@@ -1521,6 +1693,14 @@ public class Instrumentation {
                  }
              }
          }
@@ -437,10 +439,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          try {
              intent.setAllowFds(false);
              intent.migrateExtraStreamToClipData();
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/content/ContentResolver.java pang/frameworks/base/core/java/android/content/ContentResolver.java
---- /root/CM10_original/frameworks/base/core/java/android/content/ContentResolver.java	2012-11-02 12:33:18.822769854 +0545
-+++ pang/frameworks/base/core/java/android/content/ContentResolver.java	2012-10-11 22:01:05.245375686 +0545
-@@ -43,6 +43,10 @@ import android.text.TextUtils;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/content/ContentResolver.java nexus_4.2/frameworks/base/core/java/android/content/ContentResolver.java
+--- 4.2.1_orig/frameworks/base/core/java/android/content/ContentResolver.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/content/ContentResolver.java	2012-12-11 15:02:36.000000000 +1100
+@@ -44,6 +44,10 @@ import android.text.TextUtils;
  import android.util.EventLog;
  import android.util.Log;
  
@@ -451,7 +453,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  import java.io.File;
  import java.io.FileInputStream;
  import java.io.FileNotFoundException;
-@@ -369,6 +373,9 @@ public abstract class ContentResolver {
+@@ -371,6 +375,9 @@ public abstract class ContentResolver {
              try {
                  qCursor = unstableProvider.query(uri, projection,
                          selection, selectionArgs, sortOrder, remoteCancellationSignal);
@@ -461,7 +463,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              } catch (DeadObjectException e) {
                  // The remote process has died...  but we only hold an unstable
                  // reference though, so we might recover!!!  Let's try!!!!
-@@ -380,6 +387,10 @@ public abstract class ContentResolver {
+@@ -382,6 +389,10 @@ public abstract class ContentResolver {
                  }
                  qCursor = stableProvider.query(uri, projection,
                          selection, selectionArgs, sortOrder, remoteCancellationSignal);
@@ -472,10 +474,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              }
              if (qCursor == null) {
                  return null;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/content/ContextWrapper.java pang/frameworks/base/core/java/android/content/ContextWrapper.java
---- /root/CM10_original/frameworks/base/core/java/android/content/ContextWrapper.java	2012-11-02 12:33:18.822769854 +0545
-+++ pang/frameworks/base/core/java/android/content/ContextWrapper.java	2012-10-11 22:01:05.245375686 +0545
-@@ -44,6 +44,8 @@ import java.io.InputStream;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/content/ContextWrapper.java nexus_4.2/frameworks/base/core/java/android/content/ContextWrapper.java
+--- 4.2.1_orig/frameworks/base/core/java/android/content/ContextWrapper.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/content/ContextWrapper.java	2012-12-11 15:02:36.000000000 +1100
+@@ -52,6 +52,8 @@ import java.io.InputStream;
   */
  public class ContextWrapper extends Context {
      Context mBase;
@@ -484,11 +486,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
      public ContextWrapper(Context base) {
          mBase = base;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/hardware/Camera.java pang/frameworks/base/core/java/android/hardware/Camera.java
---- /root/CM10_original/frameworks/base/core/java/android/hardware/Camera.java	2012-11-02 12:33:18.838761652 +0545
-+++ pang/frameworks/base/core/java/android/hardware/Camera.java	2012-10-11 22:01:05.245375686 +0545
-@@ -37,6 +37,26 @@ import java.util.List;
- import java.util.StringTokenizer;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/hardware/Camera.java nexus_4.2/frameworks/base/core/java/android/hardware/Camera.java
+--- 4.2.1_orig/frameworks/base/core/java/android/hardware/Camera.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/hardware/Camera.java	2012-12-11 15:02:36.000000000 +1100
+@@ -42,6 +42,26 @@ import java.util.HashMap;
+ import java.util.List;
  import java.util.concurrent.locks.ReentrantLock;
  
 +///////////////////////////////////////////////////////
@@ -514,7 +516,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * The Camera class is used to set image capture settings, start/stop preview,
   * snap pictures, and retrieve frames for encoding for video.  This class is a
-@@ -160,6 +180,157 @@ public class Camera {
+@@ -162,6 +182,157 @@ public class Camera {
      private boolean mFaceDetectionRunning = false;
      private Object mAutoFocusCallbackLock = new Object();
  
@@ -672,9 +674,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Broadcast Action:  A new picture is taken by the camera, and the entry of
       * the picture has been added to the media store.
-@@ -311,6 +482,14 @@ public class Camera {
-         mCameraDataCallback = null;
-         mCameraMetaDataCallback = null;
+@@ -328,6 +499,14 @@ public class Camera {
+         mPostviewCallback = null;
+         mZoomListener = null;
  
 +	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 +        //BEGIN PRIVACY
@@ -687,7 +689,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          Looper looper;
          if ((looper = Looper.myLooper()) != null) {
              mEventHandler = new EventHandler(this, looper);
-@@ -733,6 +912,27 @@ public class Camera {
+@@ -750,6 +929,27 @@ public class Camera {
  
          @Override
          public void handleMessage(Message msg) {
@@ -715,7 +717,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              switch(msg.what) {
              case CAMERA_MSG_SHUTTER:
                  if (mShutterCallback != null) {
-@@ -742,13 +942,19 @@ public class Camera {
+@@ -759,13 +959,19 @@ public class Camera {
  
              case CAMERA_MSG_RAW_IMAGE:
                  if (mRawImageCallback != null) {
@@ -737,38 +739,31 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }
                  return;
  
-@@ -766,18 +972,27 @@ public class Camera {
+@@ -783,13 +989,21 @@ public class Camera {
                          // Set to oneshot mode again.
                          setHasPreviewCallback(true, false);
                      }
 -                    pCb.onPreviewFrame((byte[])msg.obj, mCamera);
-+		    if(access)
-+                    	pCb.onPreviewFrame((byte[])msg.obj, mCamera);//leave the camera the preview frame!
-+		    else
-+			pCb.onPreviewFrame(getFakeImage(), mCamera);//here we go testing if it is able to give preview of fake image, if it doesn't work -> pass null
++                    //pCb.onPreviewFrame((byte[])msg.obj, mCamera);
++                    if(access)
++                        pCb.onPreviewFrame((byte[])msg.obj, mCamera);//leave the camera the preview frame!
++                    else
++                        pCb.onPreviewFrame(getFakeImage(), mCamera);//here we go testing if it is able to give preview of fake image, if it doesn't work -> pass null
                  }
                  return;
  
-             case CAMERA_MSG_META_DATA:
-                 if (mCameraMetaDataCallback != null) {
--                    mCameraMetaDataCallback.onCameraMetaData((int[])msg.obj, mCamera);
-+		    if(access)
-+                    	mCameraMetaDataCallback.onCameraMetaData((int[])msg.obj, mCamera);
-+		    else
-+			mCameraMetaDataCallback.onCameraMetaData(null, mCamera);
-                 }
-                 return;
              case CAMERA_MSG_POSTVIEW_FRAME:
                  if (mPostviewCallback != null) {
 -                    mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
-+		    if(access)
-+                    	mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
-+		    else
-+			mPostviewCallback.onPictureTaken(getFakeImage(), mCamera);//same as in onpreviewframe -> give test fake image
++                    //mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
++                    if(access)
++                        mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
++                    else
++                        mPostviewCallback.onPictureTaken(getFakeImage(), mCamera);//same as in onpreviewframe -> give test fake image
                  }
                  return;
  
-@@ -822,6 +1037,8 @@ public class Camera {
+@@ -834,6 +1048,8 @@ public class Camera {
                  return;
              }
          }
@@ -776,8 +771,8 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
      }
  
-     private static int byteToInt(byte[] b, int offset) {
-@@ -1160,6 +1377,28 @@ public class Camera {
+     private static void postEventFromNative(Object camera_ref,
+@@ -1077,6 +1293,28 @@ public class Camera {
          mPostviewCallback = postview;
          mJpegCallback = jpeg;
  
@@ -806,18 +801,18 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          // If callback is not set, do not send me callbacks.
          int msgType = 0;
          if (mShutterCallback != null) {
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/net/ConnectivityManager.java pang/frameworks/base/core/java/android/net/ConnectivityManager.java
---- /root/CM10_original/frameworks/base/core/java/android/net/ConnectivityManager.java	2012-11-02 12:33:18.842759601 +0545
-+++ pang/frameworks/base/core/java/android/net/ConnectivityManager.java	2012-10-11 22:01:05.245375686 +0545
-@@ -298,6 +298,7 @@ public class ConnectivityManager {
- 
-     public static final int DEFAULT_NETWORK_PREFERENCE = TYPE_WIFI;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/net/ConnectivityManager.java nexus_4.2/frameworks/base/core/java/android/net/ConnectivityManager.java
+--- 4.2.1_orig/frameworks/base/core/java/android/net/ConnectivityManager.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/net/ConnectivityManager.java	2012-12-11 15:02:36.000000000 +1100
+@@ -338,6 +338,7 @@ public class ConnectivityManager {
+      */
+     public static final int CONNECTIVITY_CHANGE_DELAY_DEFAULT = 3000;
  
 +//added static to the mService
      private final IConnectivityManager mService;
  
      public static boolean isNetworkTypeValid(int networkType) {
-@@ -613,9 +614,8 @@ public class ConnectivityManager {
+@@ -653,9 +654,8 @@ public class ConnectivityManager {
          }
      }
  
@@ -829,10 +824,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      public ConnectivityManager(IConnectivityManager service) {
          mService = checkNotNull(service, "missing IConnectivityManager");
      }
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/net/NetworkInfo.java pang/frameworks/base/core/java/android/net/NetworkInfo.java
---- /root/CM10_original/frameworks/base/core/java/android/net/NetworkInfo.java	2012-11-02 12:33:18.842759601 +0545
-+++ pang/frameworks/base/core/java/android/net/NetworkInfo.java	2012-10-11 22:01:05.245375686 +0545
-@@ -162,6 +162,13 @@ public class NetworkInfo implements Parc
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/net/NetworkInfo.java nexus_4.2/frameworks/base/core/java/android/net/NetworkInfo.java
+--- 4.2.1_orig/frameworks/base/core/java/android/net/NetworkInfo.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/net/NetworkInfo.java	2012-12-11 15:02:36.000000000 +1100
+@@ -165,6 +165,13 @@ public class NetworkInfo implements Parc
          }
      }
  
@@ -846,9 +841,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Reports the type of network to which the
       * info in this {@code NetworkInfo} pertains.
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/net/RouteInfo.java pang/frameworks/base/core/java/android/net/RouteInfo.java
---- /root/CM10_original/frameworks/base/core/java/android/net/RouteInfo.java	2012-11-02 12:33:18.842759601 +0545
-+++ pang/frameworks/base/core/java/android/net/RouteInfo.java	2012-10-11 22:01:05.245375686 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/net/RouteInfo.java nexus_4.2/frameworks/base/core/java/android/net/RouteInfo.java
+--- 4.2.1_orig/frameworks/base/core/java/android/net/RouteInfo.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/net/RouteInfo.java	2012-12-11 15:02:36.000000000 +1100
 @@ -236,6 +236,7 @@ public class RouteInfo implements Parcel
       * @param routes a Collection of RouteInfos to chose from
       * @param dest the InetAddress your trying to get to
@@ -857,10 +852,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
       */
      public static RouteInfo selectBestRoute(Collection<RouteInfo> routes, InetAddress dest) {
          if ((routes == null) || (dest == null)) return null;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/os/SystemProperties.java pang/frameworks/base/core/java/android/os/SystemProperties.java
---- /root/CM10_original/frameworks/base/core/java/android/os/SystemProperties.java	2012-11-02 12:33:18.850755501 +0545
-+++ pang/frameworks/base/core/java/android/os/SystemProperties.java	2012-10-11 22:01:05.245375686 +0545
-@@ -21,6 +21,22 @@ import java.util.ArrayList;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/os/SystemProperties.java nexus_4.2/frameworks/base/core/java/android/os/SystemProperties.java
+--- 4.2.1_orig/frameworks/base/core/java/android/os/SystemProperties.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/os/SystemProperties.java	2012-12-11 15:02:36.000000000 +1100
+@@ -20,6 +20,22 @@ import java.util.ArrayList;
  
  import android.util.Log;
  
@@ -883,7 +878,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
  /**
   * Gives access to the system properties store.  The system properties
-@@ -45,6 +61,128 @@ public class SystemProperties
+@@ -42,6 +58,128 @@ public class SystemProperties
      private static native void native_set(String key, String def);
      private static native void native_add_change_callback();
  
@@ -1012,7 +1007,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Get the value for the given key.
       * @return an empty string if the key isn't found
-@@ -54,6 +192,15 @@ public class SystemProperties
+@@ -51,6 +189,15 @@ public class SystemProperties
          if (key.length() > PROP_NAME_MAX) {
              throw new IllegalArgumentException("key.length > " + PROP_NAME_MAX);
          }
@@ -1028,7 +1023,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          return native_get(key);
      }
  
-@@ -66,6 +213,15 @@ public class SystemProperties
+@@ -63,6 +210,15 @@ public class SystemProperties
          if (key.length() > PROP_NAME_MAX) {
              throw new IllegalArgumentException("key.length > " + PROP_NAME_MAX);
          }
@@ -1044,10 +1039,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          return native_get(key, def);
      }
  
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/provider/Settings.java pang/frameworks/base/core/java/android/provider/Settings.java
---- /root/CM10_original/frameworks/base/core/java/android/provider/Settings.java	2012-11-03 15:43:20.292047221 +0545
-+++ pang/frameworks/base/core/java/android/provider/Settings.java	2012-11-03 18:35:29.000000000 +0545
-@@ -55,6 +55,17 @@ import java.net.URISyntaxException;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/provider/Settings.java nexus_4.2/frameworks/base/core/java/android/provider/Settings.java
+--- 4.2.1_orig/frameworks/base/core/java/android/provider/Settings.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/provider/Settings.java	2012-12-11 15:02:36.000000000 +1100
+@@ -58,6 +58,17 @@ import java.net.URISyntaxException;
  import java.util.HashMap;
  import java.util.HashSet;
  
@@ -1065,9 +1060,56 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * The Settings provider contains global system-level device preferences.
   */
-@@ -3199,7 +3210,71 @@ public final class Settings {
-             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_PATTERN_SIZE);
-             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_BEFORE_UNLOCK);
+@@ -2754,6 +2765,46 @@ public final class Settings {
+                 }
+             }
+ 
++            
++         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++         //BEGIN PRIVACY
++         if(name.equals(ANDROID_ID)){ //normally it should work with sNameValueCache.getString instead of sLockSettings
++  	       initiate();
++  	       try{
++  		       if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++  		       if(mPm == null) mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++  		       PrivacySettings settings = null;
++  		       final String[] packages = getPackageName();
++  		       if(packages != null && packages.length > 0){
++  			       for(int i = 0; i < packages.length; i++){
++  				       settings = pSetMan.getSettings(packages[i]);
++  				       if(settings != null && settings.getAndroidIdSetting() != PrivacySettings.REAL){
++  					       String output = settings.getAndroidID();
++  					       if(output != null){
++  						       pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, output, null);
++  						       return output;
++  					       } else{
++  						       pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, "q4a5w896ay21dr46", null);
++  						       return "q4a5w896ay21dr46"; //we can not pull out empty android id, because we get bootlops then
++  					       }
++  				       }
++  				       if(i == packages.length - 1) //package is allowed to get android id
++  					       pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
++  				       settings = null;
++  			       }
++  		       } else{
++  			       pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
++  		       }
++  	       }
++  	       catch (Exception e){
++  		       e.printStackTrace();
++  		       Log.e(PRIVACY_TAG,"Got exception in  getString()");
++               }
++         }
++         //END PRIVACY
++         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+             return sNameValueCache.getStringForUser(resolver, name, userHandle);
+         }
+ 
+@@ -3054,7 +3105,71 @@ public final class Settings {
+                 int userHandle) {
+             return putStringForUser(cr, name, Float.toString(value), userHandle);
          }
 -
 +        
@@ -1136,58 +1178,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 +        
          /**
-          * Look up a name in the database.
-          * @param resolver to access the database with
-@@ -3211,7 +3286,45 @@ public final class Settings {
-                 sNameValueCache = new NameValueCache(SYS_PROP_SETTING_VERSION, CONTENT_URI,
-                                                      CALL_METHOD_GET_SECURE);
-             }
--
-+            
-+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-+			//BEGIN PRIVACY
-+			if(name.equals(ANDROID_ID)){ //normally it should work with sNameValueCache.getString instead of sLockSettings
-+				initiate();
-+				try{
-+					if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
-+					if(mPm == null) mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
-+					PrivacySettings settings = null;
-+					final String[] packages = getPackageName();
-+					if(packages != null && packages.length > 0){
-+						for(int i = 0; i < packages.length; i++){
-+							settings = pSetMan.getSettings(packages[i]);
-+							if(settings != null && settings.getAndroidIdSetting() != PrivacySettings.REAL){
-+								String output = settings.getAndroidID();
-+								if(output != null){
-+									pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, output, null);
-+									return output;
-+								} else{
-+									pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, "q4a5w896ay21dr46", null);
-+									return "q4a5w896ay21dr46"; //we can not pull out empty android id, because we get bootlops then
-+								}
-+							}
-+							if(i == packages.length - 1) //package is allowed to get android id
-+								pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
-+							settings = null;
-+						}
-+					} else{
-+						pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
-+					}
-+				}
-+				catch (Exception e){
-+					e.printStackTrace();
-+					Log.e(PRIVACY_TAG,"Got exception in  getString()");
-+				}
-+			}
-+			//END PRIVACY
-+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-+            
-             if (sLockSettings == null) {
-                 sLockSettings = ILockSettings.Stub.asInterface(
-                         (IBinder) ServiceManager.getService("lock_settings"));
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java pang/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java
---- /root/CM10_original/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java	2012-11-02 12:33:18.858751401 +0545
-+++ pang/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java	2012-10-11 22:01:05.245375686 +0545
+          * @deprecated Use {@link android.provider.Settings.Global#DEVELOPMENT_SETTINGS_ENABLED}
+          * instead
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java nexus_4.2/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java
+--- 4.2.1_orig/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java	2012-12-11 13:23:38.000000000 +1100
++++ nexus_4.2/frameworks/base/core/java/android/speech/srec/MicrophoneInputStream.java	2012-12-11 15:02:36.000000000 +1100
 @@ -24,6 +24,20 @@ import java.io.IOException;
  import java.io.InputStream;
  import java.lang.IllegalStateException;
@@ -1376,11 +1371,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          mAudioRecord = AudioRecordNew(sampleRate, fifoDepth);
          if (mAudioRecord == 0) throw new IOException("AudioRecord constructor failed - busy?");
          int status = AudioRecordStart(mAudioRecord);
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/media/java/android/media/AudioRecord.java pang/frameworks/base/media/java/android/media/AudioRecord.java
---- /root/CM10_original/frameworks/base/media/java/android/media/AudioRecord.java	2012-11-02 12:33:20.333994845 +0545
-+++ pang/frameworks/base/media/java/android/media/AudioRecord.java	2012-10-11 22:01:05.249373636 +0545
-@@ -30,6 +30,22 @@ import android.os.Message;
- import android.os.SystemProperties;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/media/java/android/media/AudioRecord.java nexus_4.2/frameworks/base/media/java/android/media/AudioRecord.java
+--- 4.2.1_orig/frameworks/base/media/java/android/media/AudioRecord.java	2012-12-11 13:24:20.000000000 +1100
++++ nexus_4.2/frameworks/base/media/java/android/media/AudioRecord.java	2012-12-11 15:02:36.000000000 +1100
+@@ -29,6 +29,22 @@ import android.os.Looper;
+ import android.os.Message;
  import android.util.Log;
  
 +////////////////////////////////////////////
@@ -1402,7 +1397,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * The AudioRecord class manages the audio resources for Java applications
   * to record audio from the audio input hardware of the platform. This is
-@@ -191,6 +207,28 @@ public class AudioRecord
+@@ -190,6 +206,28 @@ public class AudioRecord
       */
      private int mSessionId = 0;
  
@@ -1431,7 +1426,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      //---------------------------------------------------------
      // Constructor, Finalize
      //--------------------
-@@ -243,12 +281,125 @@ public class AudioRecord
+@@ -242,12 +280,125 @@ public class AudioRecord
              return; // with mState == STATE_UNINITIALIZED
          }
  
@@ -1557,7 +1552,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      // Convenience method for the constructor's parameter checks.
      // This is where constructor IllegalArgumentException-s are thrown
      // postconditions:
-@@ -526,10 +677,27 @@ public class AudioRecord
+@@ -511,10 +662,27 @@ public class AudioRecord
       */
      public void startRecording()
      throws IllegalStateException {
@@ -1589,10 +1584,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
          // start recording
          synchronized(mRecordingStateLock) {
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/media/java/android/media/MediaRecorder.java pang/frameworks/base/media/java/android/media/MediaRecorder.java
---- /root/CM10_original/frameworks/base/media/java/android/media/MediaRecorder.java	2012-11-02 12:33:20.333994845 +0545
-+++ pang/frameworks/base/media/java/android/media/MediaRecorder.java	2012-11-03 18:43:08.818552073 +0545
-@@ -23,12 +23,27 @@ import android.os.Looper;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/media/java/android/media/MediaRecorder.java nexus_4.2/frameworks/base/media/java/android/media/MediaRecorder.java
+--- 4.2.1_orig/frameworks/base/media/java/android/media/MediaRecorder.java	2012-12-11 13:24:20.000000000 +1100
++++ nexus_4.2/frameworks/base/media/java/android/media/MediaRecorder.java	2012-12-11 15:02:36.000000000 +1100
+@@ -22,12 +22,27 @@ import android.os.Looper;
  import android.os.Message;
  import android.util.Log;
  import android.view.Surface;
@@ -1621,7 +1616,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * Used to record audio and video. The recording control is based on a
   * simple state machine (see below).
-@@ -92,6 +107,68 @@ public class MediaRecorder
+@@ -91,6 +106,68 @@ public class MediaRecorder
      private OnErrorListener mOnErrorListener;
      private OnInfoListener mOnInfoListener;
  
@@ -1690,7 +1685,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Default constructor.
       */
-@@ -106,6 +183,16 @@ public class MediaRecorder
+@@ -105,6 +182,16 @@ public class MediaRecorder
              mEventHandler = null;
          }
  
@@ -1707,7 +1702,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          /* Native setup requires a weak reference to our object.
           * It's easier to create it here than in C++.
           */
-@@ -136,9 +223,300 @@ public class MediaRecorder
+@@ -135,9 +222,300 @@ public class MediaRecorder
       * @see android.hardware.Camera#setPreviewDisplay(android.view.SurfaceHolder)
       */
      public void setPreviewDisplay(Surface sv) {
@@ -2008,7 +2003,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Defines the audio source. These constants are used with
       * {@link MediaRecorder#setAudioSource(int)}.
-@@ -326,6 +704,13 @@ public class MediaRecorder
+@@ -327,6 +705,13 @@ public class MediaRecorder
       * @see android.media.CamcorderProfile
       */
      public void setProfile(CamcorderProfile profile) {
@@ -2022,7 +2017,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          setOutputFormat(profile.fileFormat);
          setVideoFrameRate(profile.videoFrameRate);
          setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
-@@ -360,6 +745,13 @@ public class MediaRecorder
+@@ -361,6 +746,13 @@ public class MediaRecorder
       * possible.
       */
      public void setCaptureRate(double fps) {
@@ -2036,7 +2031,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          // Make sure that time lapse is enabled when this method is called.
          setParameter("time-lapse-enable=1");
  
-@@ -587,6 +979,13 @@ public class MediaRecorder
+@@ -588,6 +980,13 @@ public class MediaRecorder
       * @param bitRate the video encoding bit rate in bits per second.
       */
      public void setVideoEncodingBitRate(int bitRate) {
@@ -2050,7 +2045,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (bitRate <= 0) {
              throw new IllegalArgumentException("Video encoding bit rate is not positive");
          }
-@@ -627,6 +1026,7 @@ public class MediaRecorder
+@@ -628,6 +1027,7 @@ public class MediaRecorder
      {
          mPath = null;
          mFd = fd;
@@ -2058,7 +2053,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      }
  
      /**
-@@ -641,6 +1041,7 @@ public class MediaRecorder
+@@ -642,6 +1042,7 @@ public class MediaRecorder
      {
          mFd = null;
          mPath = path;
@@ -2066,7 +2061,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      }
  
      // native implementation
-@@ -659,6 +1060,76 @@ public class MediaRecorder
+@@ -660,6 +1061,76 @@ public class MediaRecorder
       */
      public void prepare() throws IllegalStateException, IOException
      {
@@ -2143,7 +2138,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mPath != null) {
              FileOutputStream fos = new FileOutputStream(mPath);
              try {
-@@ -711,7 +1182,24 @@ public class MediaRecorder
+@@ -712,7 +1183,24 @@ public class MediaRecorder
       */
      public void reset() {
          native_reset();
@@ -2169,7 +2164,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          // make sure none of the listeners get called anymore
          mEventHandler.removeCallbacksAndMessages(null);
      }
-@@ -986,5 +1474,81 @@ public class MediaRecorder
+@@ -993,5 +1481,81 @@ public class MediaRecorder
      private native void setParameter(String nameValuePair);
  
      @Override
@@ -2252,9 +2247,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    
 +    
  }
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/preloaded-classes pang/frameworks/base/preloaded-classes
---- /root/CM10_original/frameworks/base/preloaded-classes	2012-11-02 12:33:35.430252964 +0545
-+++ pang/frameworks/base/preloaded-classes	2012-11-03 19:12:47.386441259 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/preloaded-classes nexus_4.2/frameworks/base/preloaded-classes
+--- 4.2.1_orig/frameworks/base/preloaded-classes	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/preloaded-classes	2012-12-11 15:02:36.000000000 +1100
 @@ -2,6 +2,19 @@
  # Automatically generated by frameworks/base/tools/preload/WritePreloadedClassFile.java.
  # MIN_LOAD_TIME_MICROS=1250
@@ -2275,9 +2270,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  android.R$styleable
  android.accounts.Account
  android.accounts.Account$1
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl pang/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl	2012-07-18 16:10:12.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl nexus_4.2/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/IPrivacySettingsManager.aidl	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,18 @@
 +package android.privacy;
 +import android.privacy.PrivacySettings;
@@ -2297,9 +2292,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    boolean setNotificationsEnabled(boolean enable);
 +    void setBootCompleted();
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java pang/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java	2012-09-30 22:14:32.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacyFileObserver.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,103 @@
 +package android.privacy;
 +
@@ -2404,9 +2399,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +//    }
 +    
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java pang/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java	2012-09-27 01:55:38.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacyPersistenceAdapter.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,862 @@
 +package android.privacy;
 +
@@ -3270,17 +3265,17 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        return db;
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl pang/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl	2012-07-18 16:10:12.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,4 @@
 +package android.privacy;
 +
 +/** {@hide} */
 +parcelable PrivacySettings;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettings.java pang/frameworks/base/privacy/java/android/privacy/PrivacySettings.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettings.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacySettings.java	2012-09-27 02:31:56.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettings.java nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettings.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettings.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettings.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,1015 @@
 +package android.privacy;
 +
@@ -4297,9 +4292,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    
 +	
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java pang/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java	2012-10-16 01:47:20.873929667 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettingsManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,200 @@
 +package android.privacy;
 +
@@ -4501,9 +4496,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        }
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java pang/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java	2012-10-28 14:49:54.791103516 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/PrivacySettingsManagerService.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,151 @@
 +package android.privacy;
 +
@@ -4656,9 +4651,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        }
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java	2012-07-18 16:10:12.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyAccountManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,285 @@
 +package android.privacy.surrogate;
 +
@@ -4945,9 +4940,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java	2012-10-30 02:21:11.801874561 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyActivityManagerService.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,281 @@
 +package android.privacy.surrogate;
 +
@@ -5230,9 +5225,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        return privacyHash;
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java	2012-10-28 14:28:01.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,320 @@
 +package android.privacy.surrogate;
 +
@@ -5554,9 +5549,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +		}
 +	}
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java	2012-10-28 14:25:17.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyCDMAPhone.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,300 @@
 +package android.privacy.surrogate;
 +
@@ -5858,9 +5853,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +		}
 +	}
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java	2012-09-27 17:40:48.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyConnectivityManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,206 @@
 +package android.privacy.surrogate;
 +
@@ -6068,9 +6063,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	
 +
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java	2012-07-28 18:16:36.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyContentResolver.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,238 @@
 +package android.privacy.surrogate;
 +
@@ -6086,9 +6081,6 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +import android.provider.CalendarContract;
 +import android.provider.CallLog;
 +import android.provider.ContactsContract;
-+import android.provider.Telephony.Mms;
-+import android.provider.Telephony.MmsSms;
-+import android.provider.Telephony.Sms;
 +import android.util.Log;
 +
 +/**
@@ -6098,6 +6090,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 + */
 +public final class PrivacyContentResolver {
 +    
++   private static final String SMS_CONTENT_URI_AUTHORITY = "sms";
++   private static final String MMS_CONTENT_URI_AUTHORITY = "mms";
++   private static final String MMS_SMS_CONTENT_URI_AUTHORITY = "mms-sms";
++
 +    private static final String TAG = "PrivacyContentResolver";
 +    
 +    private static PrivacySettingsManager pSetMan;
@@ -6175,7 +6171,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +                        pSetMan.notification(packageName, uid, PrivacySettings.REAL, PrivacySettings.DATA_CALENDAR, null, pSet);
 +                    }
 +                    
-+                } else if (auth.equals(Mms.CONTENT_URI.getAuthority())) {
++                } else if (auth.equals(MMS_CONTENT_URI_AUTHORITY)) {
 +                    
 +                    if (pSet != null && pSet.getMmsSetting() == PrivacySettings.EMPTY) {
 +                        output_label = "[empty]";
@@ -6185,7 +6181,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +                        pSetMan.notification(packageName, uid, PrivacySettings.REAL, PrivacySettings.DATA_MMS, null, pSet);
 +                    }
 +                    
-+                } else if (auth.equals(Sms.CONTENT_URI.getAuthority())) {
++                } else if (auth.equals(SMS_CONTENT_URI_AUTHORITY)) {
 +                    
 +                    if (pSet != null && pSet.getSmsSetting() == PrivacySettings.EMPTY) {
 +                        output_label = "[empty]";
@@ -6195,7 +6191,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +                        pSetMan.notification(packageName, uid, PrivacySettings.REAL, PrivacySettings.DATA_SMS, null, pSet);
 +                    }
 +                // all messages, sms and mms
-+                } else if (auth.equals(MmsSms.CONTENT_URI.getAuthority()) || 
++                } else if (auth.equals(MMS_SMS_CONTENT_URI_AUTHORITY) || 
 +                        auth.equals("mms-sms-v2") /* htc specific, accessed by system messages application */) { 
 +                    
 +                    // deny access if access to either sms, mms or both is restricted by privacy settings
@@ -6292,27 +6288,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	return realCursor;   
 +    }
 +
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
-+
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java	2012-07-28 18:34:05.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyCursor.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,484 @@
 +package android.privacy.surrogate;
 +
@@ -6798,9 +6777,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	
 +
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java	2012-10-28 14:29:12.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyGSMPhone.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,302 @@
 +package android.privacy.surrogate;
 +
@@ -7104,9 +7083,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	}
 +
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java	2012-10-12 00:18:02.690820220 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyLocationManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,520 @@
 +package android.privacy.surrogate;
 +
@@ -7628,9 +7607,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    }
 +
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java	2012-08-25 21:41:06.000000000 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacyPhoneProxy.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,629 @@
 +package android.privacy.surrogate;
 +
@@ -8261,10 +8240,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	
 +	
 +}
-\ Kein Zeilenumbruch am Dateiende.
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacySipPhone.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacySipPhone.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacySipPhone.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacySipPhone.java	2012-10-28 14:39:20.000000000 +0545
+\ No newline at end of file
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacySipPhone.java nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacySipPhone.java
+--- 4.2.1_orig/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacySipPhone.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/opt/privacy/java/android/privacy/surrogate/PrivacySipPhone.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,301 @@
 +package android.privacy.surrogate;
 +
@@ -8567,9 +8546,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	}
 +
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java	2012-11-03 01:09:35.071529193 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyTelephonyManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,510 @@
 +package android.privacy.surrogate;
 +
@@ -9081,10 +9060,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        return output;
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java
---- /root/CM10_original/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java	2012-09-27 21:16:58.000000000 +0545
-@@ -0,0 +1,208 @@
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java
+--- 4.2.1_orig/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/privacy/java/android/privacy/surrogate/PrivacyWifiManager.java	2012-12-11 15:02:36.000000000 +1100
+@@ -0,0 +1,207 @@
 +package android.privacy.surrogate;
 +
 +import java.util.ArrayList;
@@ -9098,7 +9077,6 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +import android.net.wifi.WifiInfo;
 +import android.net.wifi.WifiManager;
 +import android.os.Binder;
-+import android.os.Handler;
 +import android.os.ServiceManager;
 +import android.privacy.IPrivacySettingsManager;
 +import android.privacy.PrivacySettings;
@@ -9119,8 +9097,8 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +	private static final String P_TAG = "PrivacyWifiManager";
 +	
 +
-+	public PrivacyWifiManager(IWifiManager service, Handler handler, Context context){
-+		super(service,handler);
++	public PrivacyWifiManager(Context context, IWifiManager service){
++		super(context,service);
 +		this.context = context;
 +		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
 +	}
@@ -9293,10 +9271,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +		}
 +	}
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java pang/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java
---- /root/CM10_original/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java	2012-11-02 12:33:35.450242714 +0545
-+++ pang/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java	2012-10-30 02:13:28.000000000 +0545
-@@ -37,6 +37,8 @@ import android.os.UserId;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java nexus_4.2/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java
+--- 4.2.1_orig/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/services/java/com/android/server/am/BroadcastQueue.java	2012-12-11 15:02:36.000000000 +1100
+@@ -40,6 +40,8 @@ import android.os.UserHandle;
  import android.util.EventLog;
  import android.util.Slog;
  
@@ -9305,7 +9283,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * BROADCASTS
   *
-@@ -621,8 +623,31 @@ public class BroadcastQueue {
+@@ -632,8 +634,31 @@ public class BroadcastQueue {
                          + mQueueName + "] for " + r + " at " + timeoutTime);
                  setBroadcastTimeoutLocked(timeoutTime);
              }
@@ -9338,7 +9316,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              if (nextReceiver instanceof BroadcastFilter) {
                  // Simple case: this is a registered receiver who gets
                  // a direct call.
-@@ -631,7 +656,15 @@ public class BroadcastQueue {
+@@ -642,7 +667,15 @@ public class BroadcastQueue {
                          "Delivering ordered ["
                          + mQueueName + "] to registered "
                          + filter + ": " + r);
@@ -9355,7 +9333,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  if (r.receiver == null || !r.ordered) {
                      // The receiver has already finished, so schedule to
                      // process the next one.
-@@ -701,7 +734,12 @@ public class BroadcastQueue {
+@@ -733,7 +766,12 @@ public class BroadcastQueue {
                          + ": process crashing");
                  skip = true;
              }
@@ -9369,7 +9347,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              if (skip) {
                  if (DEBUG_BROADCAST)  Slog.v(TAG,
                          "Skipping delivery of ordered ["
-@@ -787,6 +825,33 @@ public class BroadcastQueue {
+@@ -814,6 +852,33 @@ public class BroadcastQueue {
          }
      }
  
@@ -9403,9 +9381,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      final void setBroadcastTimeoutLocked(long timeoutTime) {
          if (! mPendingBroadcastTimeoutMessage) {
              Message msg = mHandler.obtainMessage(BROADCAST_TIMEOUT_MSG, this);
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java pang/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java
---- /root/CM10_original/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java	2012-08-25 22:32:34.143534623 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java nexus_4.2/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java
+--- 4.2.1_orig/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java	1970-01-01 10:00:00.000000000 +1000
++++ nexus_4.2/frameworks/base/services/java/com/android/server/PrivacyTelephonyRegistry.java	2012-12-11 15:02:36.000000000 +1100
 @@ -0,0 +1,394 @@
 +package com.android.server;
 +
@@ -9801,10 +9779,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +        }
 +    }
 +}
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/services/java/com/android/server/SystemServer.java pang/frameworks/base/services/java/com/android/server/SystemServer.java
---- /root/CM10_original/frameworks/base/services/java/com/android/server/SystemServer.java	2012-11-02 12:33:35.442246814 +0545
-+++ pang/frameworks/base/services/java/com/android/server/SystemServer.java	2012-10-11 22:01:46.256343849 +0545
-@@ -70,6 +70,11 @@ import java.io.File;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/services/java/com/android/server/SystemServer.java nexus_4.2/frameworks/base/services/java/com/android/server/SystemServer.java
+--- 4.2.1_orig/frameworks/base/services/java/com/android/server/SystemServer.java	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/services/java/com/android/server/SystemServer.java	2012-12-11 15:02:36.000000000 +1100
+@@ -72,6 +72,11 @@ import java.io.File;
  import java.util.Timer;
  import java.util.TimerTask;
  
@@ -9816,16 +9794,16 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  class ServerThread extends Thread {
      private static final String TAG = "SystemServer";
      private static final String ENCRYPTING_STATE = "trigger_restart_min_framework";
-@@ -174,7 +179,7 @@ class ServerThread extends Thread {
-             context = ActivityManagerService.main(factoryTest);
+@@ -222,7 +227,7 @@ class ServerThread extends Thread {
+             ServiceManager.addService(Context.DISPLAY_SERVICE, display, true);
  
              Slog.i(TAG, "Telephony Registry");
--            ServiceManager.addService("telephony.registry", new TelephonyRegistry(context));
-+            ServiceManager.addService("telephony.registry", new PrivacyTelephonyRegistry(context));
+-            telephonyRegistry = new TelephonyRegistry(context);
++            telephonyRegistry = new PrivacyTelephonyRegistry(context);
+             ServiceManager.addService("telephony.registry", telephonyRegistry);
  
              Slog.i(TAG, "Scheduling Policy");
-             ServiceManager.addService(Context.SCHEDULING_POLICY_SERVICE,
-@@ -219,6 +224,10 @@ class ServerThread extends Thread {
+@@ -277,6 +282,10 @@ class ServerThread extends Thread {
              Slog.i(TAG, "Content Manager");
              contentService = ContentService.main(context,
                      factoryTest == SystemServer.FACTORY_TEST_LOW_LEVEL);
@@ -9836,9 +9814,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
              Slog.i(TAG, "System Content Providers");
              ActivityManagerService.installSystemProviders();
-@@ -970,6 +979,19 @@ class ServerThread extends Thread {
+@@ -1008,6 +1017,19 @@ class ServerThread extends Thread {
          Slog.d(TAG, "Starting service: " + intent);
-         context.startService(intent);
+         context.startServiceAsUser(intent, UserHandle.OWNER);
      }
 +
 +    // BEGIN privacy-added
@@ -9856,28 +9834,20 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  }
  
  public class SystemServer {
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/services/java/com/android/server/TelephonyRegistry.java pang/frameworks/base/services/java/com/android/server/TelephonyRegistry.java
---- /root/CM10_original/frameworks/base/services/java/com/android/server/TelephonyRegistry.java	2012-11-02 12:33:35.442246814 +0545
-+++ pang/frameworks/base/services/java/com/android/server/TelephonyRegistry.java	2012-10-11 22:01:46.256343849 +0545
-@@ -16,6 +16,7 @@
- 
- package com.android.server;
- 
-+
- import android.content.Context;
- import android.content.Intent;
- import android.content.pm.PackageManager;
-@@ -56,7 +57,7 @@ class TelephonyRegistry extends ITelepho
-     private static final String TAG = "TelephonyRegistry";
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/services/java/com/android/server/TelephonyRegistry.java nexus_4.2/frameworks/base/services/java/com/android/server/TelephonyRegistry.java
+--- 4.2.1_orig/frameworks/base/services/java/com/android/server/TelephonyRegistry.java	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/services/java/com/android/server/TelephonyRegistry.java	2012-12-11 15:02:36.000000000 +1100
+@@ -63,7 +63,7 @@ class TelephonyRegistry extends ITelepho
      private static final boolean DBG = false;
+     private static final boolean DBG_LOC = false;
  
 -    private static class Record {
 +    public static class Record {
          String pkgForDebug;
  
          IBinder binder;
-@@ -66,29 +67,29 @@ class TelephonyRegistry extends ITelepho
-         int events;
+@@ -81,29 +81,29 @@ class TelephonyRegistry extends ITelepho
+         }
      }
  
 -    private final Context mContext;
@@ -9917,7 +9887,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
      private boolean mDataConnectionPossible = false;
  
-@@ -102,13 +103,13 @@ class TelephonyRegistry extends ITelepho
+@@ -117,13 +117,13 @@ class TelephonyRegistry extends ITelepho
  
      private LinkCapabilities mDataConnectionLinkCapabilities;
  
@@ -9930,12 +9900,12 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 -    private int mOtaspMode = ServiceStateTracker.OTASP_UNKNOWN;
 +    protected int mOtaspMode = ServiceStateTracker.OTASP_UNKNOWN;
  
--    private CellInfo mCellInfo = null;
-+    protected CellInfo mCellInfo = null;
+-    private List<CellInfo> mCellInfo = null;
++    protected List<CellInfo> mCellInfo = null;
  
      static final int PHONE_STATE_PERMISSION_MASK =
                  PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR |
-@@ -124,7 +125,7 @@ class TelephonyRegistry extends ITelepho
+@@ -165,7 +165,7 @@ class TelephonyRegistry extends ITelepho
      // calls go through a oneway interface and local calls going through a
      // handler before they get to app code.
  
@@ -9944,7 +9914,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          CellLocation  location = CellLocation.getEmpty();
  
          // Note that location can be null for non-phone builds like
-@@ -253,7 +254,7 @@ class TelephonyRegistry extends ITelepho
+@@ -312,7 +312,7 @@ class TelephonyRegistry extends ITelepho
          }
      }
  
@@ -9953,7 +9923,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          synchronized (mRecords) {
              final int recordCount = mRecords.size();
              for (int i = 0; i < recordCount; i++) {
-@@ -275,6 +276,7 @@ class TelephonyRegistry extends ITelepho
+@@ -334,6 +334,7 @@ class TelephonyRegistry extends ITelepho
              for (Record r : mRecords) {
                  if ((r.events & PhoneStateListener.LISTEN_CALL_STATE) != 0) {
                      try {
@@ -9961,7 +9931,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                          r.callback.onCallStateChanged(state, incomingNumber);
                      } catch (RemoteException ex) {
                          mRemoveList.add(r.binder);
-@@ -292,9 +294,11 @@ class TelephonyRegistry extends ITelepho
+@@ -351,9 +352,11 @@ class TelephonyRegistry extends ITelepho
          }
          synchronized (mRecords) {
              mServiceState = state;
@@ -9973,7 +9943,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                          r.callback.onServiceStateChanged(new ServiceState(state));
                      } catch (RemoteException ex) {
                          mRemoveList.add(r.binder);
-@@ -572,7 +576,7 @@ class TelephonyRegistry extends ITelepho
+@@ -639,7 +642,7 @@ class TelephonyRegistry extends ITelepho
      // the legacy intent broadcasting
      //
  
@@ -9982,8 +9952,8 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          long ident = Binder.clearCallingIdentity();
          try {
              mBatteryStats.notePhoneState(state.getState());
-@@ -668,7 +672,7 @@ class TelephonyRegistry extends ITelepho
-         mContext.sendStickyBroadcast(intent);
+@@ -738,7 +741,7 @@ class TelephonyRegistry extends ITelepho
+         mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
      }
  
 -    private boolean checkNotifyPermission(String method) {
@@ -9991,7 +9961,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.MODIFY_PHONE_STATE)
                  == PackageManager.PERMISSION_GRANTED) {
              return true;
-@@ -679,7 +683,7 @@ class TelephonyRegistry extends ITelepho
+@@ -749,7 +752,7 @@ class TelephonyRegistry extends ITelepho
          return false;
      }
  
@@ -10000,7 +9970,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if ((events & PhoneStateListener.LISTEN_CELL_LOCATION) != 0) {
              mContext.enforceCallingOrSelfPermission(
                      android.Manifest.permission.ACCESS_COARSE_LOCATION, null);
-@@ -698,7 +702,7 @@ class TelephonyRegistry extends ITelepho
+@@ -768,7 +771,7 @@ class TelephonyRegistry extends ITelepho
          }
      }
  
@@ -10009,10 +9979,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          if (mRemoveList.size() > 0) {
              for (IBinder b: mRemoveList) {
                  remove(b);
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java pang/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java
---- /root/CM10_original/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java	2012-11-02 12:33:35.494220161 +0545
-+++ pang/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java	2012-10-11 22:01:46.256343849 +0545
-@@ -16,16 +16,26 @@
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java nexus_4.2/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java
+--- 4.2.1_orig/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/telephony/java/android/telephony/PhoneStateListener.java	2012-12-11 15:02:36.000000000 +1100
+@@ -16,16 +16,23 @@
  
  package android.telephony;
  
@@ -10022,9 +9992,6 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +import android.privacy.PrivacySettingsManager;
 +import android.content.Context;
 +// END privacy-added
-+
-+
-+
 +
  import android.os.Bundle;
  import android.os.Handler;
@@ -10041,10 +10008,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
 -import com.android.internal.telephony.IPhoneStateListener;
 +//import com.android.internal.telephony.IPhoneStateListener;
- import com.android.internal.telephony.Phone;
  
- /**
-@@ -157,6 +167,29 @@ public class PhoneStateListener {
+ import java.util.List;
+ 
+@@ -158,6 +165,29 @@ public class PhoneStateListener {
       */
      public static final int LISTEN_OTASP_CHANGED                            = 0x00000200;
  
@@ -10074,7 +10041,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      /**
       * Listen for changes to observed cell info.
       *
-@@ -323,11 +356,51 @@ public class PhoneStateListener {
+@@ -317,11 +347,51 @@ public class PhoneStateListener {
  
          public void onCellLocationChanged(Bundle bundle) {
              CellLocation location = CellLocation.newFromBundle(bundle);
@@ -10128,9 +10095,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          }
  
          public void onDataConnectionStateChanged(int state, int networkType) {
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/android/telephony/ServiceState.java pang/frameworks/base/telephony/java/android/telephony/ServiceState.java
---- /root/CM10_original/frameworks/base/telephony/java/android/telephony/ServiceState.java	2012-11-02 12:33:35.494220161 +0545
-+++ pang/frameworks/base/telephony/java/android/telephony/ServiceState.java	2012-10-11 22:01:46.256343849 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/telephony/java/android/telephony/ServiceState.java nexus_4.2/frameworks/base/telephony/java/android/telephony/ServiceState.java
+--- 4.2.1_orig/frameworks/base/telephony/java/android/telephony/ServiceState.java	2012-12-11 13:24:48.000000000 +1100
++++ nexus_4.2/frameworks/base/telephony/java/android/telephony/ServiceState.java	2012-12-11 15:02:36.000000000 +1100
 @@ -484,7 +484,7 @@ public class ServiceState implements Par
                  + " EmergOnly=" + mIsEmergencyOnly);
      }
@@ -10140,10 +10107,38 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          mState = state;
          mRoaming = false;
          mOperatorAlphaLong = null;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java	2012-11-02 12:33:35.830047936 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java	2012-10-11 22:01:46.256343849 +0545
-@@ -831,7 +831,7 @@ public class CDMAPhone extends PhoneBase
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java nexus_4.2/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java
+--- 4.2.1_orig/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java	2012-12-11 13:24:58.000000000 +1100
++++ nexus_4.2/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java	2012-12-11 15:02:36.000000000 +1100
+@@ -78,6 +78,24 @@ public class WifiInfo implements Parcela
+      */
+     private boolean mMeteredHint;
+ 
++
++    //---------------------------------------------------------------------------------------------------------------
++    /**
++     * Constructor for faking WifiInfo
++     * @hide
++     */
++    public WifiInfo(boolean fake){
++    	mWifiSsid = WifiSsid.createFromAsciiEncoded("");
++        mBSSID = "";
++        mNetworkId = -1;
++        mSupplicantState = SupplicantState.UNINITIALIZED;
++        mRssi = -9999;
++        mLinkSpeed = -1;
++        mHiddenSSID = false;
++    }
++    //---------------------------------------------------------------------------------------------------------------
++
++
+     WifiInfo() {
+         mWifiSsid = null;
+         mBSSID = null;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CDMAPhone.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CDMAPhone.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CDMAPhone.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CDMAPhone.java	2012-12-11 15:02:36.000000000 +1100
+@@ -822,7 +822,7 @@ public class CDMAPhone extends PhoneBase
           super.notifyServiceStateChangedP(ss);
       }
  
@@ -10152,25 +10147,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
           mNotifier.notifyCellLocation(this);
       }
  
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java	2012-11-02 12:33:35.830047936 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java	2012-11-03 18:49:31.878105951 +0545
-@@ -40,8 +40,10 @@ import android.os.Message;
- import android.os.PowerManager;
- import android.os.Registrant;
- import android.os.RegistrantList;
-+
- import android.os.SystemClock;
- import android.os.SystemProperties;
-+
- import android.provider.Settings;
- import android.provider.Settings.Secure;
- import android.provider.Settings.SettingNotFoundException;
-@@ -59,8 +61,17 @@ import java.io.PrintWriter;
- import java.util.Arrays;
- import java.util.Calendar;
- import java.util.Date;
-+
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java	2012-12-11 15:02:36.000000000 +1100
+@@ -68,6 +68,15 @@ import java.util.Date;
+ import java.util.List;
  import java.util.TimeZone;
  
 +/////////////////////////////////////////////////////////
@@ -10181,10 +10162,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +import java.util.Random;
 +/////////////////////////////////////////////////////////
 +
++
  /**
   * {@hide}
   */
-@@ -117,6 +128,11 @@ public class CdmaServiceStateTracker ext
+@@ -121,6 +130,11 @@ public class CdmaServiceStateTracker ext
      String mSavedTimeZone;
      long mSavedTime;
      long mSavedAtTime;
@@ -10194,21 +10176,21 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    private PrivacySettingsManager pSetMan;
 +    //-------------------------------------------------------------------------------------------------------------------------------------------------
  
-     /**
-      * We can't register for SIM_RECORDS_LOADED immediately because the
-@@ -208,6 +224,11 @@ public class CdmaServiceStateTracker ext
+     /** Wake lock used while setting time of day. */
+     private PowerManager.WakeLock mWakeLock;
+@@ -203,6 +217,11 @@ public class CdmaServiceStateTracker ext
+             Settings.System.getUriFor(Settings.System.AUTO_TIME_ZONE), true,
+             mAutoTimeZoneObserver);
          setSignalStrengthDefaultValues();
- 
-         mNeedToRegForRuimLoaded = true;
-+        
++
 +        //-------------------------------------------------------------------------------------------------------------------------------------------------
 +        this.mContext = phone.getContext();
 +        pSetMan = new PrivacySettingsManager(mContext, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
 +        //-------------------------------------------------------------------------------------------------------------------------------------------------
      }
  
-     public void dispose() {
-@@ -382,10 +403,21 @@ public class CdmaServiceStateTracker ext
+     @Override
+@@ -371,10 +390,21 @@ public class CdmaServiceStateTracker ext
                          loge("error parsing cell location data: " + ex);
                      }
                  }
@@ -10233,7 +10215,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              }
  
              // Release any temporary cell lock, which could have been
-@@ -573,6 +605,7 @@ public class CdmaServiceStateTracker ext
+@@ -569,6 +599,7 @@ public class CdmaServiceStateTracker ext
      protected void handlePollStateResultMessage(int what, AsyncResult ar){
          int ints[];
          String states[];
@@ -10241,7 +10223,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          switch (what) {
          case EVENT_POLL_STATE_REGISTRATION_CDMA: // Handle RIL_REQUEST_REGISTRATION_STATE.
              states = (String[])ar.result;
-@@ -662,8 +695,19 @@ public class CdmaServiceStateTracker ext
+@@ -658,8 +689,19 @@ public class CdmaServiceStateTracker ext
  
  
              // Values are -1 if not available.
@@ -10263,7 +10245,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
              if (reasonForDenial == 0) {
                  mRegistrationDeniedReason = ServiceStateTracker.REGISTRATION_DENIED_GEN;
-@@ -694,14 +738,25 @@ public class CdmaServiceStateTracker ext
+@@ -690,14 +732,25 @@ public class CdmaServiceStateTracker ext
                                  "'= " + opNames[2]);
                      }
                  }
@@ -10292,7 +10274,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              } else {
                  if (DBG) log("EVENT_POLL_STATE_OPERATOR_CDMA: error parsing opNames");
              }
-@@ -1002,15 +1057,30 @@ public class CdmaServiceStateTracker ext
+@@ -998,15 +1051,30 @@ public class CdmaServiceStateTracker ext
              if ((cm.getRadioState().isOn()) && (!isSubscriptionFromRuim)) {
                  String eriText;
                  // Now the CDMAPhone sees the new ServiceState so it can get the new ERI text
@@ -10330,9 +10312,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              }
  
              String operatorNumeric;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java	2012-11-02 12:33:35.830047936 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java	2012-11-03 18:50:51.437305257 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -22,18 +22,27 @@ import android.os.AsyncResult;
  import android.os.Handler;
  import android.os.Message;
@@ -10534,19 +10516,19 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    
  }
  
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java	2012-11-02 12:33:35.830047936 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java	2012-10-11 22:01:46.256343849 +0545
-@@ -360,7 +360,7 @@ public class GSMPhone extends PhoneBase
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GSMPhone.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GSMPhone.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GSMPhone.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GSMPhone.java	2012-12-11 15:02:36.000000000 +1100
+@@ -353,7 +353,7 @@ public class GSMPhone extends PhoneBase
      /**
-      * Notify any interested party of a Phone state change {@link Phone.State}
+      * Notify any interested party of a Phone state change {@link PhoneConstants.State}
       */
 -    /*package*/ void notifyPhoneStateChanged() {
 +    /*package*/ public void notifyPhoneStateChanged() {
          mNotifier.notifyPhoneState(this);
      }
  
-@@ -398,7 +398,7 @@ public class GSMPhone extends PhoneBase
+@@ -391,7 +391,7 @@ public class GSMPhone extends PhoneBase
      }
  
      /*package*/
@@ -10555,18 +10537,18 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          mNotifier.notifyCellLocation(this);
      }
  
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java	2012-11-02 12:33:35.830047936 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java	2012-11-03 18:58:16.025305234 +0545
-@@ -47,6 +47,7 @@ import android.os.Message;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java	2012-12-11 15:02:36.000000000 +1100
+@@ -53,6 +53,7 @@ import android.os.Message;
  import android.os.PowerManager;
  import android.os.Registrant;
  import android.os.RegistrantList;
 +
  import android.os.SystemClock;
  import android.os.SystemProperties;
- import android.provider.Settings;
-@@ -59,7 +60,6 @@ import android.text.TextUtils;
+ import android.os.UserHandle;
+@@ -67,7 +68,6 @@ import android.text.TextUtils;
  import android.util.EventLog;
  import android.util.Log;
  import android.util.TimeUtils;
@@ -10574,7 +10556,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  import java.io.FileDescriptor;
  import java.io.PrintWriter;
  import java.util.ArrayList;
-@@ -70,6 +70,14 @@ import java.util.Date;
+@@ -78,6 +78,14 @@ import java.util.Date;
  import java.util.HashSet;
  import java.util.TimeZone;
  
@@ -10589,7 +10571,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  /**
   * {@hide}
   */
-@@ -81,7 +89,12 @@ final class GsmServiceStateTracker exten
+@@ -89,7 +97,12 @@ final class GsmServiceStateTracker exten
      GsmCellLocation cellLoc;
      GsmCellLocation newCellLoc;
      int mPreferredNetworkType;
@@ -10603,7 +10585,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
      private int gprsState = ServiceState.STATE_OUT_OF_SERVICE;
      private int newGPRSState = ServiceState.STATE_OUT_OF_SERVICE;
      private int mMaxDataCalls = 1;
-@@ -237,7 +250,13 @@ final class GsmServiceStateTracker exten
+@@ -234,7 +247,13 @@ final class GsmServiceStateTracker exten
          IntentFilter filter = new IntentFilter();
          filter.addAction(Intent.ACTION_LOCALE_CHANGED);
          phone.getContext().registerReceiver(mIntentReceiver, filter);
@@ -10618,7 +10600,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          // Gsm doesn't support OTASP so its not needed
          phone.notifyOtaspChanged(OTASP_NOT_NEEDED);
      }
-@@ -351,8 +370,24 @@ final class GsmServiceStateTracker exten
+@@ -342,8 +361,24 @@ final class GsmServiceStateTracker exten
                              Log.w(LOG_TAG, "error parsing location: " + ex);
                          }
                      }
@@ -10645,29 +10627,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  }
  
                  // Release any temporary cell lock, which could have been
-@@ -497,8 +532,19 @@ final class GsmServiceStateTracker exten
- 
-     protected void updateSpnDisplay() {
-         int rule = phone.mIccRecords.getDisplayRule(ss.getOperatorNumeric());
--        String spn = phone.mIccRecords.getServiceProviderName();
--        String plmn = ss.getOperatorAlphaLong();
-+        PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
-+	String spn;
-+        //--------------------------------------------------------------------------------------------------------------------------------
-+        //this part is needed because we do not changed the IccRecord class
-+        if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
-+        	spn = "";
-+        }
-+        else{
-+        	spn = phone.mIccRecords.getServiceProviderName();
-+        }
-+        //--------------------------------------------------------------------------------------------------------------------------------
-+        
-+        String plmn = ss.getOperatorAlphaLong(); //we can do this, because catched it before
- 
-         // For emergency calls only, pass the EmergencyCallsOnly string via EXTRA_PLMN
-         if (mEmergencyOnly && cm.getRadioState().isOn()) {
-@@ -568,6 +614,7 @@ final class GsmServiceStateTracker exten
+@@ -604,6 +639,7 @@ final class GsmServiceStateTracker exten
                          ar.exception);
              }
          } else try {
@@ -10675,7 +10635,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              switch (what) {
                  case EVENT_POLL_STATE_REGISTRATION:
                      states = (String[])ar.result;
-@@ -607,8 +654,23 @@ final class GsmServiceStateTracker exten
+@@ -643,8 +679,23 @@ final class GsmServiceStateTracker exten
                      }
  
                      // LAC and CID are -1 if not avail
@@ -10701,7 +10661,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                  break;
  
                  case EVENT_POLL_STATE_GPRS:
-@@ -646,7 +708,14 @@ final class GsmServiceStateTracker exten
+@@ -682,7 +733,14 @@ final class GsmServiceStateTracker exten
                      String opNames[] = (String[])ar.result;
  
                      if (opNames != null && opNames.length >= 3) {
@@ -10717,7 +10677,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
                      }
                  break;
  
-@@ -1000,7 +1069,7 @@ final class GsmServiceStateTracker exten
+@@ -1041,7 +1099,7 @@ final class GsmServiceStateTracker exten
          }
  
          if (hasLocationChanged) {
@@ -10726,9 +10686,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          }
  
          if (! isGprsConsistent(gprsState, ss.getState())) {
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java	2012-11-02 12:33:35.834045886 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java	2012-11-03 18:57:09.491426096 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java	2012-12-11 15:02:36.000000000 +1100
 @@ -38,6 +38,13 @@ import java.util.HashSet;
  import java.util.List;
  import java.util.Set;
@@ -10905,15 +10865,25 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          Context context = mPhone.getContext();
  
          context.enforceCallingPermission(
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/PhoneFactory.java pang/frameworks/base/telephony/java/com/android/internal/telephony/PhoneFactory.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/PhoneFactory.java	2012-11-02 12:33:35.498218111 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/PhoneFactory.java	2012-10-11 22:01:46.256343849 +0545
-@@ -23,13 +23,24 @@ import android.provider.Settings;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/PhoneFactory.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/PhoneFactory.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/PhoneFactory.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/PhoneFactory.java	2012-12-11 15:02:36.000000000 +1100
+@@ -24,14 +24,25 @@ import android.telephony.TelephonyManage
  import android.util.Log;
  import android.os.SystemProperties;
  
 -import com.android.internal.telephony.cdma.CDMAPhone;
 -import com.android.internal.telephony.cdma.CDMALTEPhone;
++//import com.android.internal.telephony.cdma.CDMAPhone;
++//import com.android.internal.telephony.cdma.CDMALTEPhone;
+ import com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager;
+-import com.android.internal.telephony.gsm.GSMPhone;
+-import com.android.internal.telephony.sip.SipPhone;
++//import com.android.internal.telephony.gsm.GSMPhone;
++//import com.android.internal.telephony.sip.SipPhone;
+ import com.android.internal.telephony.sip.SipPhoneFactory;
+ import com.android.internal.telephony.uicc.UiccController;
+ 
 +//--------------------------------------------------------
 +import android.privacy.surrogate.PrivacyCDMAPhone;
 +import android.privacy.surrogate.PrivacyCDMALTEPhone;
@@ -10921,75 +10891,75 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +import android.privacy.surrogate.PrivacySipPhone;
 +//--------------------------------------------------------
 +
-+//import com.android.internal.telephony.cdma.CDMAPhone;
-+//import com.android.internal.telephony.cdma.CDMALTEPhone;
- import com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager;
--import com.android.internal.telephony.gsm.GSMPhone;
-+//import com.android.internal.telephony.gsm.GSMPhone;
- import com.android.internal.telephony.sip.SipPhone;
- import com.android.internal.telephony.sip.SipPhoneFactory;
- 
 +//BEGIN PRIVACY ADDED
 +import android.privacy.surrogate.PrivacyPhoneProxy;
 +//END PRIVACY ADDED
 +
- import java.lang.reflect.Constructor;
- 
  /**
-@@ -154,28 +165,28 @@ public class PhoneFactory {
-                     Log.wtf(LOG_TAG, "Unable to construct command interface", e);
-                     throw new RuntimeException(e);
-                 }
--
-+		//BEGIN PRIVACY ADDED--------------------------------------------------------------------------------------------------------------------
-                 int phoneType = getPhoneType(networkMode);
-                 if (phoneType == Phone.PHONE_TYPE_GSM) {
+  * {@hide}
+  */
+@@ -145,20 +156,32 @@ public class PhoneFactory {
+                 int phoneType = TelephonyManager.getPhoneType(networkMode);
+                 if (phoneType == PhoneConstants.PHONE_TYPE_GSM) {
                      Log.i(LOG_TAG, "Creating GSMPhone");
 -                    sProxyPhone = new PhoneProxy(new GSMPhone(context,
 -                            sCommandsInterface, sPhoneNotifier));
++                    //BEGIN PRIVACY ADDED
++                    //sProxyPhone = new PhoneProxy(new GSMPhone(context,
++                    //        sCommandsInterface, sPhoneNotifier));
 +                    sProxyPhone = new PrivacyPhoneProxy(new PrivacyGSMPhone(context,
 +                            sCommandsInterface, sPhoneNotifier),context);
-                 } else if (phoneType == Phone.PHONE_TYPE_CDMA) {
-                     switch (BaseCommands.getLteOnCdmaModeStatic()) {
-                         case Phone.LTE_ON_CDMA_TRUE:
++                    //END PRIVACY ADDED
+                 } else if (phoneType == PhoneConstants.PHONE_TYPE_CDMA) {
+                     switch (TelephonyManager.getLteOnCdmaModeStatic()) {
+                         case PhoneConstants.LTE_ON_CDMA_TRUE:
                              Log.i(LOG_TAG, "Creating CDMALTEPhone");
 -                            sProxyPhone = new PhoneProxy(new CDMALTEPhone(context,
 -                                sCommandsInterface, sPhoneNotifier));
++                            //BEGIN PRIVACY ADDED
++                            //sProxyPhone = new PhoneProxy(new CDMALTEPhone(context,
++                            //    sCommandsInterface, sPhoneNotifier));
 +                            sProxyPhone = new PrivacyPhoneProxy(new PrivacyCDMALTEPhone(context,
 +                                sCommandsInterface, sPhoneNotifier),context);
++                            //END PRIVACY ADDED
                              break;
-                         case Phone.LTE_ON_CDMA_FALSE:
+                         case PhoneConstants.LTE_ON_CDMA_FALSE:
                          default:
                              Log.i(LOG_TAG, "Creating CDMAPhone");
 -                            sProxyPhone = new PhoneProxy(new CDMAPhone(context,
 -                                    sCommandsInterface, sPhoneNotifier));
++                            //BEGIN PRIVACY ADDED
++                            //sProxyPhone = new PhoneProxy(new CDMAPhone(context,
++                            //        sCommandsInterface, sPhoneNotifier));
 +                            sProxyPhone = new PrivacyPhoneProxy(new PrivacyCDMAPhone(context,
 +                                    sCommandsInterface, sPhoneNotifier),context);
++                            //END PRIVACY ADDED
                              break;
                      }
                  }
--
-+		//END PRIVACY ADDED--------------------------------------------------------------------------------------------------------------------
-                 sMadeDefaults = true;
-             }
-         }
-@@ -236,13 +247,13 @@ public class PhoneFactory {
+@@ -185,13 +208,19 @@ public class PhoneFactory {
          synchronized(PhoneProxy.lockForRadioTechnologyChange) {
-             switch (BaseCommands.getLteOnCdmaModeStatic()) {
-                 case Phone.LTE_ON_CDMA_TRUE: {
+             switch (TelephonyManager.getLteOnCdmaModeStatic()) {
+                 case PhoneConstants.LTE_ON_CDMA_TRUE: {
 -                    phone = new CDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    //BEGIN PRIVACY ADDED
++                    //phone = new CDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
 +                    phone = new PrivacyCDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    //END PRIVACY ADDED
                      break;
                  }
-                 case Phone.LTE_ON_CDMA_FALSE:
-                 case Phone.LTE_ON_CDMA_UNKNOWN:
+                 case PhoneConstants.LTE_ON_CDMA_FALSE:
+                 case PhoneConstants.LTE_ON_CDMA_UNKNOWN:
                  default: {
 -                    phone = new CDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    //BEGIN PRIVACY ADDED
++                    //phone = new CDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
 +                    phone = new PrivacyCDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    //END PRIVACY ADDED
                      break;
                  }
              }
-@@ -252,7 +263,7 @@ public class PhoneFactory {
+@@ -201,7 +230,7 @@ public class PhoneFactory {
  
      public static Phone getGsmPhone() {
          synchronized(PhoneProxy.lockForRadioTechnologyChange) {
@@ -10998,9 +10968,9 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              return phone;
          }
      }
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java pang/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java	2012-11-02 12:33:35.834045886 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java	2012-10-11 22:01:46.256343849 +0545
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java	2012-12-11 15:02:36.000000000 +1100
 @@ -21,6 +21,7 @@ import com.android.internal.telephony.Ph
  import android.content.Context;
  import android.net.sip.SipProfile;
@@ -11018,10 +10988,10 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          } catch (ParseException e) {
              Log.w("SipPhoneFactory", "makePhone", e);
              return null;
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhone.java pang/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhone.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhone.java	2012-11-02 12:33:35.834045886 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/sip/SipPhone.java	2012-10-11 22:01:46.256343849 +0545
-@@ -60,7 +60,7 @@ public class SipPhone extends SipPhoneBa
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhone.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhone.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhone.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/sip/SipPhone.java	2012-12-11 15:02:36.000000000 +1100
+@@ -61,7 +61,7 @@ public class SipPhone extends SipPhoneBa
      private SipManager mSipManager;
      private SipProfile mProfile;
  
@@ -11030,11 +11000,11 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          super(context, notifier);
  
          if (DEBUG) Log.d(LOG_TAG, "new SipPhone: " + profile.getUriString());
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/SMSDispatcher.java pang/frameworks/base/telephony/java/com/android/internal/telephony/SMSDispatcher.java
---- /root/CM10_original/frameworks/base/telephony/java/com/android/internal/telephony/SMSDispatcher.java	2012-11-02 12:33:35.826049986 +0545
-+++ pang/frameworks/base/telephony/java/com/android/internal/telephony/SMSDispatcher.java	2012-10-11 22:06:46.722254592 +0545
-@@ -67,6 +67,13 @@ import java.util.HashMap;
- import java.util.List;
+diff -rupN '--exclude=*.git' '--exclude=*.rej' '--exclude=*.orig' '--exclude=.svn' 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/SMSDispatcher.java nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/SMSDispatcher.java
+--- 4.2.1_orig/frameworks/opt/telephony/src/java/com/android/internal/telephony/SMSDispatcher.java	2012-12-11 13:25:03.000000000 +1100
++++ nexus_4.2/frameworks/opt/telephony/src/java/com/android/internal/telephony/SMSDispatcher.java	2012-12-11 15:02:36.000000000 +1100
+@@ -74,6 +74,13 @@ import java.util.concurrent.atomic.Atomi
+ import java.util.HashMap;
  import java.util.Random;
  
 +// BEGIN PRIVACY ADDED
@@ -11047,7 +11017,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  import static android.telephony.SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE;
  import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
  import static android.telephony.SmsManager.RESULT_ERROR_LIMIT_EXCEEDED;
-@@ -179,6 +186,123 @@ public abstract class SMSDispatcher exte
+@@ -196,6 +203,123 @@ public abstract class SMSDispatcher exte
          sConcatenatedRef += 1;
          return sConcatenatedRef;
      }
@@ -11171,8 +11141,8 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
  
      /**
       * Create a new SMS dispatcher.
-@@ -202,7 +326,13 @@ public abstract class SMSDispatcher exte
-         mMockSmsReceiver.registerReceiver();
+@@ -218,7 +342,13 @@ public abstract class SMSDispatcher exte
+                 Settings.Global.SMS_SHORT_CODE_RULE), false, mSettingsObserver);
  
          createWakelock();
 -
@@ -11186,7 +11156,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          mSmsCapable = mContext.getResources().getBoolean(
                  com.android.internal.R.bool.config_sms_capable);
          mSmsReceiveDisabled = !SystemProperties.getBoolean(
-@@ -803,7 +933,7 @@ public abstract class SMSDispatcher exte
+@@ -846,7 +976,7 @@ public abstract class SMSDispatcher exte
      protected void sendMultipartText(String destAddr, String scAddr,
              ArrayList<String> parts, ArrayList<PendingIntent> sentIntents,
              ArrayList<PendingIntent> deliveryIntents) {
@@ -11194,8 +11164,8 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
 +    	
          int refNumber = getNextConcatenatedRef() & 0x00FF;
          int msgCount = parts.size();
-         int encoding = android.telephony.SmsMessage.ENCODING_UNKNOWN;
-@@ -821,7 +951,7 @@ public abstract class SMSDispatcher exte
+         int encoding = SmsConstants.ENCODING_UNKNOWN;
+@@ -864,7 +994,7 @@ public abstract class SMSDispatcher exte
              encodingForParts[i] = details;
          }
  
@@ -11204,7 +11174,7 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
              SmsHeader.ConcatRef concatRef = new SmsHeader.ConcatRef();
              concatRef.refNumber = refNumber;
              concatRef.seqNumber = i + 1;  // 1-based sequence
-@@ -907,7 +1037,17 @@ public abstract class SMSDispatcher exte
+@@ -950,7 +1080,17 @@ public abstract class SMSDispatcher exte
              }
              return;
          }
@@ -11223,31 +11193,3 @@ diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.m
          HashMap<String, Object> map = new HashMap<String, Object>();
          map.put("smsc", smsc);
          map.put("pdu", pdu);
-diff -rupN '--exclude=.svn' '--exclude=.git*' '--exclude=*.java~' '--exclude=*.mk~' '--exclude=*.orig~' '--exclude=*.txt' '--exclude=*.orig' '--exclude=*.rej' '--exclude=*~' /root/CM10_original/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java pang/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java
---- /root/CM10_original/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java	2012-11-02 12:33:40.947423568 +0545
-+++ pang/frameworks/base/wifi/java/android/net/wifi/WifiInfo.java	2012-10-11 22:01:46.260341799 +0545
-@@ -76,6 +76,24 @@ public class WifiInfo implements Parcela
-      */
-     private boolean mMeteredHint;
- 
-+
-+    //---------------------------------------------------------------------------------------------------------------
-+    /**
-+     * Constructor for faking WifiInfo
-+     * @hide
-+     */
-+    public WifiInfo(boolean fake){
-+	mSSID = "";
-+        mBSSID = "";
-+        mNetworkId = -1;
-+        mSupplicantState = SupplicantState.UNINITIALIZED;
-+        mRssi = -9999;
-+        mLinkSpeed = -1;
-+        mHiddenSSID = false;
-+    }
-+    //---------------------------------------------------------------------------------------------------------------
-+
-+
-     WifiInfo() {
-         mSSID = null;
-         mBSSID = null;
