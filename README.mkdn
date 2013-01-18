@@ -35,7 +35,7 @@ To Remove
 	cd ~/android/system/build; git checkout . ; git clean -df
 	cd ~/android/system/libcore; git checkout . ; git clean -df
 	cd ~/android/system/frameworks/base; git checkout . ; git clean -df
-	cd ~/android/system/frameworks/telephony/opt; git checkout . ; git clean -df
+	cd ~/android/system/frameworks/opt/telephony; git checkout . ; git clean -df
 	cd ~/android/system/packages/apps/Mms; git checkout . ; git clean -df
 	cd ~/android/system; repo abandon pdroid
 
