@@ -26,11 +26,7 @@ To Apply
 
 To Remove
 --------------
-	cd ~/android/system
-	rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates \
-	out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates \
-	out/target/common/obj/JAVA_LIBRARIES/telephony-common_intermediates \
-	out/target/common/obj/APPS/Mms_intermediates
+	cd ~/android/system; rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates out/target/common/obj/JAVA_LIBRARIES/telephony-common_intermediates out/target/common/obj/APPS/Mms_intermediates
 
 **[OR]** 	cd ~/android; make clobber
 
