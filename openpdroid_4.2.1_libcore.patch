@@ -1,6 +1,8 @@
-diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java /root/CM10/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java
---- /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	2012-08-07 23:38:17.935197236 +0545
+diff --git a/luni/src/main/java/java/lang/PrivacyInputStream.java b/luni/src/main/java/java/lang/PrivacyInputStream.java
+new file mode 100644
+index 0000000..4986566
+--- /dev/null
++++ b/luni/src/main/java/java/lang/PrivacyInputStream.java
 @@ -0,0 +1,36 @@
 +package java.lang;
 +
@@ -38,9 +40,11 @@ diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyInputStream.jav
 +    }
 +    
 +}   
-diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java /root/CM10/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java
---- /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	1970-01-01 05:30:00.000000000 +0530
-+++ pang/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	2012-09-19 20:06:31.467808140 +0545
+diff --git a/luni/src/main/java/java/lang/PrivacyProcessManager.java b/luni/src/main/java/java/lang/PrivacyProcessManager.java
+new file mode 100644
+index 0000000..3cb0a02
+--- /dev/null
++++ b/luni/src/main/java/java/lang/PrivacyProcessManager.java
 @@ -0,0 +1,182 @@
 +package java.lang;
 +
@@ -224,8 +228,10 @@ diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.
 +        }
 +    }
 +}
---- /root/CM10/libcore/luni/src/main/java/java/lang/ProcessManager.java.orig	2012-08-07 23:38:17.943193136 +0545
-+++ pang/libcore/luni/src/main/java/java/lang/ProcessManager.java	2012-09-30 23:44:44.000000000 +0545
+diff --git a/luni/src/main/java/java/lang/ProcessManager.java b/luni/src/main/java/java/lang/ProcessManager.java
+index 28314b7..400668b 100644
+--- a/luni/src/main/java/java/lang/ProcessManager.java
++++ b/luni/src/main/java/java/lang/ProcessManager.java
 @@ -16,18 +16,23 @@
  
  package java.lang;
@@ -337,7 +343,7 @@ diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.
 +    	//------------------------------------------------------------------------------------------------------------------------------------------------------
 +    	// Make sure we throw the same exceptions as the RI.
          if (taintedCommand == null) {
-             throw new NullPointerException();
+             throw new NullPointerException("taintedCommand == null");
          }
 @@ -215,7 +293,14 @@ final class ProcessManager {
                  wrapper.initCause(e);
@@ -369,8 +375,18 @@ diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.
          /** The process's exit value. */
          private Integer exitValue = null;
          private final Object exitValueMutex = new Object();
-@@ -256,11 +347,33 @@ final class ProcessManager {
-             // END privacy-modified            
+@@ -248,14 +339,42 @@ final class ProcessManager {
+             this.pid = pid;
+ 
+             this.errorStream = new ProcessInputStream(err);
+-            this.inputStream = new ProcessInputStream(in);
++            // BEGIN privacy-modified
++            if (PrivacyProcessManager.hasPrivacyPermission("systemLogsSetting", pid)) {
++                this.inputStream = new ProcessInputStream(in);
++            } else {
++                this.inputStream = new PrivacyInputStream();
++            }
++            // END privacy-modified
              this.outputStream = new ProcessOutputStream(out);
          }
 +        
@@ -404,7 +420,7 @@ diff -rupN /root/CM9/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.
                      try {
                          Libcore.os.kill(pid, SIGKILL);
                      } catch (ErrnoException e) {
-@@ -275,6 +388,11 @@ final class ProcessManager {
+@@ -270,6 +389,11 @@ final class ProcessManager {
          }
  
          public int exitValue() {

@@ -1,7 +1,8 @@
-diff -Npru --exclude='.git*' CM10/build/core/pathmap.mk pang/build/core/pathmap.mk
---- CM10/build/core/pathmap.mk	2012-07-13 08:59:33.472884054 -0700
-+++ pang/build/core/pathmap.mk	2012-07-13 10:18:29.349669133 -0700
-@@ -84,6 +84,7 @@ JNI_H_INCLUDE := $(call include-path-for
+diff --git a/core/pathmap.mk b/core/pathmap.mk
+index 4aec521..c5f0433 100644
+--- a/core/pathmap.mk
++++ b/core/pathmap.mk
+@@ -81,6 +81,7 @@ JNI_H_INCLUDE := $(call include-path-for,libnativehelper)/nativehelper
  # is so common and the other framework libraries can have mutual
  # interdependencies.
  #
@@ -9,7 +10,7 @@ diff -Npru --exclude='.git*' CM10/build/core/pathmap.mk pang/build/core/pathmap.
  FRAMEWORKS_BASE_SUBDIRS := \
  	$(addsuffix /java, \
  	    core \
-@@ -95,6 +96,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+@@ -92,6 +93,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
  	    media/mca/filterpacks \
  	    drm \
  	    opengl \
@@ -17,7 +18,7 @@ diff -Npru --exclude='.git*' CM10/build/core/pathmap.mk pang/build/core/pathmap.
  	    sax \
  	    telephony \
  	    wifi \
-@@ -102,6 +104,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+@@ -99,6 +101,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
  	    icu4j \
  	    voip \
  	 )
@@ -25,37 +26,39 @@ diff -Npru --exclude='.git*' CM10/build/core/pathmap.mk pang/build/core/pathmap.
  
  #
  # A version of FRAMEWORKS_BASE_SUBDIRS that is expanded to full paths from
-diff -Npru --exclude='.git*' CM10/build/target/product/core.mk pang/build/target/product/core.mk
---- CM10/build/target/product/core.mk	2012-07-13 08:59:33.478885480 -0700
-+++ pang/build/target/product/core.mk	2012-07-13 10:18:29.349669133 -0700
-@@ -18,6 +18,7 @@ PRODUCT_BRAND := generic
- PRODUCT_DEVICE := generic
- PRODUCT_NAME := core
+diff --git a/target/product/core.mk b/target/product/core.mk
+index 831298a..15814dd 100644
+--- a/target/product/core.mk
++++ b/target/product/core.mk
+@@ -22,6 +22,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.config.notification_sound=OnTheHunt.ogg \
+     ro.config.alarm_alert=Alarm_Classic.ogg
  
 +# BEGIN privacy-added: PDroid
- PRODUCT_PACKAGES := \
+ PRODUCT_PACKAGES += \
      ApplicationsProvider \
      BackupRestoreConfirmation \
-@@ -31,6 +32,7 @@ PRODUCT_PACKAGES := \
+@@ -36,6 +37,7 @@ PRODUCT_PACKAGES += \
      Home \
      KeyChain \
      MediaProvider \
 +    PDroid \
      PackageInstaller \
+     PhotoTable \
      PicoTts \
-     SettingsProvider \
-@@ -117,6 +119,7 @@ PRODUCT_PACKAGES := \
-     sensorservice \
-     lint \
-     uiautomator
+@@ -133,6 +135,7 @@ PRODUCT_PACKAGES += \
+     zoneinfo.dat \
+     zoneinfo.idx \
+     zoneinfo.version
 +# END privacy-added: PDroid
  
  PRODUCT_COPY_FILES += \
      system/core/rootdir/init.usb.rc:root/init.usb.rc \
-Binary files CM10/build/target/product/security/privacy.pk8 and pang/build/target/product/security/privacy.pk8 differ
-diff -Npru --exclude='.git*' CM10/build/target/product/security/privacy.x509.pem pang/build/target/product/security/privacy.x509.pem
---- CM10/build/target/product/security/privacy.x509.pem	1969-12-31 16:00:00.000000000 -0800
-+++ pang/build/target/product/security/privacy.x509.pem	2012-07-13 10:18:29.356671097 -0700
+diff --git a/target/product/security/privacy.x509.pem b/target/product/security/privacy.x509.pem
+new file mode 100644
+index 0000000..28279a0
+--- /dev/null
++++ b/target/product/security/privacy.x509.pem
 @@ -0,0 +1,20 @@
 +-----BEGIN CERTIFICATE-----
 +MIIDNDCCAhwCCQCXWkdOAj3rWTANBgkqhkiG9w0BAQUFADBcMQswCQYDVQQGEwJE
