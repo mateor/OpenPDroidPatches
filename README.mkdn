@@ -5,7 +5,7 @@ OpenPdroid for Android 4.2.1
 These are the current build patches for Android 4.2.1 and should generally reflect the
 current state
  of the _jb-mr1-release-openpdroid_ branch.
-The latest commist are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
+The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
 
 We realize that the patch/branch situation is not perfect, it is work in progress.
 
