@@ -16,11 +16,11 @@ methods are being discussed.
 
 To Apply
 --------------
-	cd ~/android/system/build; git checkout -b pdroid; patch -p1 < ~/openpdroid_4.2.1_build.patch
-	cd ~/android/system/libcore; git checkout -b pdroid; patch -p1 < openpdroid_4.2.1_libcore.patch
-	cd ~/android/system/packages/apps/Mms; git checkout -b pdroid; patch -p1 < openpdroid_4.2.1_Mms.patch
-	cd ~/android/system/frameworks/base; git checkout -b pdroid; patch -p1 < openpdroid_4.2.1_frameworks_base.patch
-	cd ~/android/system/frameworks/opt/telephony; git checkout -b pdroid; patch -p1 < ~/openpdroid_4.2.1_frameworks_opt_telephony.patch
+	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_build.patch
+	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_libcore.patch
+	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_Mms.patch
+	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_frameworks_base.patch
+	cd ~/android/system/frameworks/opt/telephony; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_frameworks_opt_telephony.patch
 	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
 
 
@@ -35,9 +35,9 @@ To Remove
 	cd ~/android/system/build; git checkout . ; git clean -df
 	cd ~/android/system/libcore; git checkout . ; git clean -df
 	cd ~/android/system/frameworks/base; git checkout . ; git clean -df
-	cd ~/android/system/frameworks/telephony/opt; git checkout . ; git clean -df
+	cd ~/android/system/frameworks/opt/telephony; git checkout . ; git clean -df
 	cd ~/android/system/packages/apps/Mms; git checkout . ; git clean -df
-	cd ~/android/system; repo abandon pdroid
+	cd ~/android/system; repo abandon openpdroid
 
 If OpenPDroid intrigues you, yet the thought of applying all these patches gives you
 pause, there is a tool that can attempt to patch the framework of an already compiled
