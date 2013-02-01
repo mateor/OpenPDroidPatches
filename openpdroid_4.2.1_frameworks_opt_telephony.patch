@@ -1,9 +1,21 @@
 diff --git a/src/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java b/src/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java
 new file mode 100644
-index 0000000..a78cfb7
+index 0000000..0c99dbb
 --- /dev/null
 +++ b/src/java/android/privacy/surrogate/PrivacyCDMALTEPhone.java
-@@ -0,0 +1,320 @@
+@@ -0,0 +1,332 @@
++/**
++* Copyright (C) 2012 Stefan Thiele
++* This program is free software; you can redistribute it and/or modify it under
++* the terms of the GNU General Public License as published by the Free Software
++* Foundation; either version 3 of the License, or (at your option) any later version.
++* This program is distributed in the hope that it will be useful, but WITHOUT ANY
++* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++* PARTICULAR PURPOSE. See the GNU General Public License for more details.
++* You should have received a copy of the GNU General Public License along with
++* this program; if not, see <http://www.gnu.org/licenses>.
++*/
++
 +package android.privacy.surrogate;
 +
 +import android.content.Context;
@@ -326,10 +338,22 @@ index 0000000..a78cfb7
 +}
 diff --git a/src/java/android/privacy/surrogate/PrivacyCDMAPhone.java b/src/java/android/privacy/surrogate/PrivacyCDMAPhone.java
 new file mode 100644
-index 0000000..783c049
+index 0000000..77c7974
 --- /dev/null
 +++ b/src/java/android/privacy/surrogate/PrivacyCDMAPhone.java
-@@ -0,0 +1,300 @@
+@@ -0,0 +1,312 @@
++/**
++* Copyright (C) 2012 Stefen Thiele
++* This program is free software; you can redistribute it and/or modify it under
++* the terms of the GNU General Public License as published by the Free Software
++* Foundation; either version 3 of the License, or (at your option) any later version.
++* This program is distributed in the hope that it will be useful, but WITHOUT ANY
++* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++* PARTICULAR PURPOSE. See the GNU General Public License for more details.
++* You should have received a copy of the GNU General Public License along with
++* this program; if not, see <http://www.gnu.org/licenses>.
++*/
++
 +package android.privacy.surrogate;
 +
 +import android.content.Context;
@@ -632,10 +656,22 @@ index 0000000..783c049
 +}
 diff --git a/src/java/android/privacy/surrogate/PrivacyGSMPhone.java b/src/java/android/privacy/surrogate/PrivacyGSMPhone.java
 new file mode 100644
-index 0000000..61a9dae
+index 0000000..5033815
 --- /dev/null
 +++ b/src/java/android/privacy/surrogate/PrivacyGSMPhone.java
-@@ -0,0 +1,302 @@
+@@ -0,0 +1,314 @@
++/**
++* Copyright (C) 2012 Stefan Thiele
++* This program is free software; you can redistribute it and/or modify it under
++* the terms of the GNU General Public License as published by the Free Software
++* Foundation; either version 3 of the License, or (at your option) any later version.
++* This program is distributed in the hope that it will be useful, but WITHOUT ANY
++* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++* PARTICULAR PURPOSE. See the GNU General Public License for more details.
++* You should have received a copy of the GNU General Public License along with
++* this program; if not, see <http://www.gnu.org/licenses>.
++*/
++
 +package android.privacy.surrogate;
 +
 +import android.content.Context;
@@ -940,10 +976,22 @@ index 0000000..61a9dae
 +}
 diff --git a/src/java/android/privacy/surrogate/PrivacyPhoneProxy.java b/src/java/android/privacy/surrogate/PrivacyPhoneProxy.java
 new file mode 100644
-index 0000000..766560a
+index 0000000..5da6d27
 --- /dev/null
 +++ b/src/java/android/privacy/surrogate/PrivacyPhoneProxy.java
-@@ -0,0 +1,632 @@
+@@ -0,0 +1,644 @@
++/**
++* Copyright (C) 2012 Stefan Thiele
++* This program is free software; you can redistribute it and/or modify it under
++* the terms of the GNU General Public License as published by the Free Software
++* Foundation; either version 3 of the License, or (at your option) any later version.
++* This program is distributed in the hope that it will be useful, but WITHOUT ANY
++* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++* PARTICULAR PURPOSE. See the GNU General Public License for more details.
++* You should have received a copy of the GNU General Public License along with
++* this program; if not, see <http://www.gnu.org/licenses>.
++*/
++
 +package android.privacy.surrogate;
 +
 +import android.content.Context;
@@ -1578,10 +1626,22 @@ index 0000000..766560a
 +}
 diff --git a/src/java/android/privacy/surrogate/PrivacySipPhone.java b/src/java/android/privacy/surrogate/PrivacySipPhone.java
 new file mode 100644
-index 0000000..f7a1a28
+index 0000000..dbace04
 --- /dev/null
 +++ b/src/java/android/privacy/surrogate/PrivacySipPhone.java
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,313 @@
++/**
++* Copyright (C) 2012 Stefan Thiele
++* This program is free software; you can redistribute it and/or modify it under
++* the terms of the GNU General Public License as published by the Free Software
++* Foundation; either version 3 of the License, or (at your option) any later version.
++* This program is distributed in the hope that it will be useful, but WITHOUT ANY
++* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++* PARTICULAR PURPOSE. See the GNU General Public License for more details.
++* You should have received a copy of the GNU General Public License along with
++* this program; if not, see <http://www.gnu.org/licenses>.
++*/
++
 +package android.privacy.surrogate;
 +
 +import android.content.Context;
