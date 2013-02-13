@@ -1,11 +1,11 @@
-OpenPdroid for Android 4.1.2 (AOSP Version)
+OpenPdroid for Android 4.1.2 (Cyanogen10/Custom Version)
 ===============================
 
 
-These are the current build patches for AOSP Android 4.1.2 and should generally reflect the current state of the _jb-mr0-release-openpdroid_ branch.
+These are the current build patches for Cyanogen10 (and most other Android 4.1.2 custom roms, e.g. AOKP) and should generally reflect the current state of the ```cm-jellybean-openpdroid``` branch.
 The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
 
-Due to a restriction in the dalvik code, AOSP and most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.2-cm``` patches.** 
+Due to a restriction in the dalvik code, AOSP vs. most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.2-cm``` patches.** 
 
 We realize that the patch/branch situation is not perfect, it is work in progress.
 
@@ -13,11 +13,10 @@ The current best advice as to how to apply/remove them is below. Some easier app
 
 To Apply
 --------------
-	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2_build.patch
-    cd ~/android/system/system/core; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2_system_core.patch
-	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2_libcore.patch
-	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2_packages_apps_Mms.patch
-	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2_frameworks_base.patch
+	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_build.patch
+	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_libcore.patch
+	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_packages_apps_Mms.patch
+	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_frameworks_base.patch
 	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
 
 

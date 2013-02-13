@@ -1,16 +1,3 @@
-diff --git a/core/java.mk b/core/java.mk
-index 9a4f3a2..437fc08 100644
---- a/core/java.mk
-+++ b/core/java.mk
-@@ -43,7 +43,7 @@ ifneq ($(LOCAL_SDK_VERSION),)
-   endif
- else
-   ifneq ($(LOCAL_NO_STANDARD_LIBRARIES),true)
--    LOCAL_JAVA_LIBRARIES := core core-junit ext framework $(LOCAL_JAVA_LIBRARIES)
-+    LOCAL_JAVA_LIBRARIES := core core-junit ext framework framework2 $(LOCAL_JAVA_LIBRARIES)
-   endif
- endif
- 
 diff --git a/core/pathmap.mk b/core/pathmap.mk
 index 91a7fd4..1de1ee9 100644
 --- a/core/pathmap.mk
@@ -39,31 +26,19 @@ index 91a7fd4..1de1ee9 100644
  
  #
  # A version of FRAMEWORKS_BASE_SUBDIRS that is expanded to full paths from
-diff --git a/core/user_tags.mk b/core/user_tags.mk
-index 24f563d..4beb54a 100644
---- a/core/user_tags.mk
-+++ b/core/user_tags.mk
-@@ -123,6 +123,7 @@ GRANDFATHERED_USER_MODULES += \
- 	exc_dump \
- 	fastboot \
- 	framework \
-+	framework2 \
- 	FrameworkCoreHostTests \
- 	frameworks-core-util-lib \
- 	fsck_msdos \
 diff --git a/target/product/core.mk b/target/product/core.mk
-index b7934b3..5e0fb2e 100644
+index 276738a..91e9ebe 100644
 --- a/target/product/core.mk
 +++ b/target/product/core.mk
-@@ -22,6 +22,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
-     ro.config.notification_sound=OnTheHunt.ogg \
-     ro.config.alarm_alert=Alarm_Classic.ogg
+@@ -18,6 +18,7 @@ PRODUCT_BRAND := generic
+ PRODUCT_DEVICE := generic
+ PRODUCT_NAME := core
  
 +# BEGIN privacy-added: PDroid
  PRODUCT_PACKAGES := \
      ApplicationsProvider \
      BackupRestoreConfirmation \
-@@ -35,6 +36,7 @@ PRODUCT_PACKAGES := \
+@@ -31,6 +32,7 @@ PRODUCT_PACKAGES := \
      Home \
      KeyChain \
      MediaProvider \
@@ -71,15 +46,7 @@ index b7934b3..5e0fb2e 100644
      PackageInstaller \
      PicoTts \
      SettingsProvider \
-@@ -60,6 +62,7 @@ PRODUCT_PACKAGES := \
-     drmserver \
-     dx \
-     ext \
-+    framework2 \
-     framework-res \
-     hprof-conv \
-     icu.dat \
-@@ -121,6 +124,7 @@ PRODUCT_PACKAGES := \
+@@ -118,6 +120,7 @@ PRODUCT_PACKAGES := \
      sensorservice \
      lint \
      uiautomator

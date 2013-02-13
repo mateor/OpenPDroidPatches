@@ -1,0 +1,3984 @@
+diff --git a/Android.mk b/Android.mk
+index 4ea530e..0fcc758 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -42,7 +42,12 @@ SECONDARY_FRAMEWORKS_SUBDIRS := \
+         voip/java/com/android/server/sip \
+         core/java/com/android/internal/widget/multiwaveview \
+         core/java/com/android/internal/util/weather \
+-        core/java/com/android/internal/http/multipart
++        core/java/com/android/internal/http/multipart \
++        core/java/com/google/android/mms \
++        core/java/com/google/android/mms/pdu \
++        core/java/com/google/android/mms/util
++
++# one other safe to move to framework2 in future: core/java/com/google/android/util
+ 
+ 
+ 
+@@ -79,6 +84,7 @@ LOCAL_SRC_FILES := $(filter-out \
+ ## across process boundaries.
+ ##
+ ## READ ME: ########################################################
++# BEGIN privacy-added: IPrivacySettingsManager.aidl
+ LOCAL_SRC_FILES += \
+ 	core/java/android/accessibilityservice/IAccessibilityServiceConnection.aidl \
+ 	core/java/android/accessibilityservice/IAccessibilityServiceClient.aidl \
+@@ -223,6 +229,7 @@ LOCAL_SRC_FILES += \
+ 	media/java/android/media/IRemoteControlDisplay.aidl \
+ 	media/java/android/media/IRemoteVolumeObserver.aidl \
+ 	media/java/android/media/IRingtonePlayer.aidl \
++	privacy/java/android/privacy/IPrivacySettingsManager.aidl \
+ 	telephony/java/com/android/internal/telephony/IPhoneStateListener.aidl \
+ 	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
+ 	telephony/java/com/android/internal/telephony/ITelephony.aidl \
+@@ -251,6 +258,7 @@ LOCAL_SRC_FILES += \
+ 	fmradio/java/com/stericsson/hardware/fm/IOnExtraCommandListener.aidl \
+ 	fmradio/java/com/stericsson/hardware/fm/IOnAutomaticSwitchListener.aidl
+ #
++# END privacy-added: IPrivacySettingsManager.aidl
+ 
+ 
+ # FRAMEWORKS_BASE_JAVA_SRC_DIRS comes from build/core/pathmap.mk
+@@ -294,6 +302,7 @@ framework_built += $(call java-lib-deps,framework2)
+ # AIDL files to be preprocessed and included in the SDK,
+ # relative to the root of the build tree.
+ # ============================================================
++# BEGIN privacy-added: PrivacySettings.aidl
+ aidl_files := \
+ 	frameworks/base/core/java/android/accounts/IAccountManager.aidl \
+ 	frameworks/base/core/java/android/accounts/IAccountManagerResponse.aidl \
+@@ -341,11 +350,13 @@ aidl_files := \
+ 	frameworks/base/graphics/java/android/graphics/Region.aidl \
+ 	frameworks/base/location/java/android/location/Criteria.aidl \
+ 	frameworks/base/location/java/android/location/Location.aidl \
++	frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl \
+ 	frameworks/base/telephony/java/android/telephony/ServiceState.aidl \
+ 	frameworks/base/telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
+ 	frameworks/base/telephony/java/com/android/internal/telephony/ITelephony.aidl \
+ 
+ gen := $(TARGET_OUT_COMMON_INTERMEDIATES)/framework.aidl
++# END privacy-added: PrivacySettings.aidl
+ $(gen): PRIVATE_SRC_FILES := $(aidl_files)
+ ALL_SDK_FILES += $(gen)
+ $(gen): $(aidl_files) | $(AIDL)
+diff --git a/core/java/android/app/ContextImpl.java b/core/java/android/app/ContextImpl.java
+index acc1c57..d8df050 100644
+--- a/core/java/android/app/ContextImpl.java
++++ b/core/java/android/app/ContextImpl.java
+@@ -61,7 +61,7 @@ import android.location.ILocationManager;
+ import android.location.LocationManager;
+ import android.media.AudioManager;
+ import android.media.MediaRouter;
+-import android.net.ConnectivityManager;
++//import android.net.ConnectivityManager;
+ import android.net.IConnectivityManager;
+ import android.net.INetworkPolicyManager;
+ import android.net.NetworkPolicyManager;
+@@ -107,6 +107,16 @@ import android.accounts.IAccountManager;
+ import android.app.admin.DevicePolicyManager;
+ import com.android.internal.os.IDropBoxManagerService;
+ 
++// BEGIN privacy-added
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettingsManager;
++import android.privacy.surrogate.PrivacyAccountManager;
++import android.privacy.surrogate.PrivacyLocationManager;
++import android.privacy.surrogate.PrivacyTelephonyManager;
++import android.privacy.surrogate.PrivacyWifiManager;
++import android.privacy.surrogate.PrivacyConnectivityManager;
++// END privacy-added
++
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileNotFoundException;
+@@ -170,6 +180,9 @@ class ContextImpl extends Context {
+     private Resources mResources;
+     /*package*/ ActivityThread mMainThread;
+     private Context mOuterContext;
++    // BEGIN privacy-added
++    private static Context sOuterContext = null;
++    // END privacy-added
+     private IBinder mActivityToken = null;
+     private ApplicationContentResolver mContentResolver;
+     private int mThemeResource = 0;
+@@ -283,7 +296,11 @@ class ContextImpl extends Context {
+                 public Object createService(ContextImpl ctx) {
+                     IBinder b = ServiceManager.getService(ACCOUNT_SERVICE);
+                     IAccountManager service = IAccountManager.Stub.asInterface(b);
+-                    return new AccountManager(ctx, service);
++                    // BEGIN privacy-modified
++                    Log.d(TAG, "PDroid:ContextImpl: returning PrivacyAccountManager rather than AccountManager");
++                    //return new AccountManager(ctx, service);
++                    return new PrivacyAccountManager(ctx, service);
++                    // END privacy-modified
+                 }});
+ 
+         registerService(ACTIVITY_SERVICE, new ServiceFetcher() {
+@@ -317,7 +334,14 @@ class ContextImpl extends Context {
+         registerService(CONNECTIVITY_SERVICE, new StaticServiceFetcher() {
+                 public Object createStaticService() {
+                     IBinder b = ServiceManager.getService(CONNECTIVITY_SERVICE);
+-                    return new ConnectivityManager(IConnectivityManager.Stub.asInterface(b));
++                    // BEGIN privacy-modified
++                    // SM: Having a 'static outer context' may be problematic if
++                    //      there is more than one instance of this class, ever.
++                    Log.d(TAG, "PDroid:ContextImpl: returning PrivacyConnectivityManager");
++                    //return new ConnectivityManager(IConnectivityManager.Stub.asInterface(b));
++                    IConnectivityManager service = IConnectivityManager.Stub.asInterface(b);
++                    return new PrivacyConnectivityManager(service, getStaticOuterContext());
++                    // END privacy-modified
+                 }});
+ 
+         registerService(COUNTRY_DETECTOR, new StaticServiceFetcher() {
+@@ -377,8 +401,16 @@ class ContextImpl extends Context {
+ 
+         registerService(LOCATION_SERVICE, new ServiceFetcher() {
+                 public Object createService(ContextImpl ctx) {
+-                    IBinder b = ServiceManager.getService(LOCATION_SERVICE);
+-                    return new LocationManager(ctx, ILocationManager.Stub.asInterface(b));
++    	            IBinder b = ServiceManager.getService(LOCATION_SERVICE);
++    
++    	            // BEGIN privacy-modified
++    	            //return new LocationManager(ctx, ILocationManager.Stub.asInterface(b));
++    	            Log.d(TAG, "PDroid:ContextImpl: returning PrivacyLocationManager");
++    	            // SM: I'm not sure whyt this is using getStaticOuterContext rather than getOuterContext.
++    	            // Would have thought it should have been the following line:
++    	            // return new PrivacyLocationManager(ILocationManager.Stub.asInterface(b), ctx.getOuterContext());
++    	            return new PrivacyLocationManager(ILocationManager.Stub.asInterface(b), getStaticOuterContext());
++    	            // END privacy-modified                    
+                 }});
+ 
+         registerService(NETWORK_POLICY_SERVICE, new ServiceFetcher() {
+@@ -448,7 +480,11 @@ class ContextImpl extends Context {
+ 
+         registerService(TELEPHONY_SERVICE, new ServiceFetcher() {
+                 public Object createService(ContextImpl ctx) {
+-                    return new TelephonyManager(ctx.getOuterContext());
++                    // BEGIN privacy-modified
++                    //return new TelephonyManager(ctx.getOuterContext());
++                    Log.d(TAG, "PDroid:ContextImpl: returning PrivacyTelephonyManager");
++                    return new PrivacyTelephonyManager(ctx.getOuterContext());
++                    // END privacy-modified
+                 }});
+ 
+         registerService(THROTTLE_SERVICE, new StaticServiceFetcher() {
+@@ -485,7 +521,11 @@ class ContextImpl extends Context {
+                 public Object createService(ContextImpl ctx) {
+                     IBinder b = ServiceManager.getService(WIFI_SERVICE);
+                     IWifiManager service = IWifiManager.Stub.asInterface(b);
+-                    return new WifiManager(service, ctx.mMainThread.getHandler());
++                    // BEGIN privacy-modified
++                    //return new WifiManager(service, ctx.mMainThread.getHandler());
++                    Log.d(TAG, "PDroid:ContextImpl: returning PrivacyWifiManager");
++		            return new PrivacyWifiManager(service, ctx.mMainThread.getHandler(), ctx);
++                    // END privacy-modified
+                 }});
+ 
+         registerService(WIFI_P2P_SERVICE, new ServiceFetcher() {
+@@ -524,6 +564,15 @@ class ContextImpl extends Context {
+                     IFmTransmitter service = IFmTransmitter.Stub.asInterface(b);
+                     return new FmTransmitterImpl(service);
+                 }});
++        // BEGIN privacy-added
++        registerService("privacy", new StaticServiceFetcher() {
++                public Object createStaticService() {
++                    Log.d(TAG, "PDroid:ContextImpl: Creating static privacy service");
++                    IBinder b = ServiceManager.getService("privacy");
++                    IPrivacySettingsManager service = IPrivacySettingsManager.Stub.asInterface(b);
++                    return new PrivacySettingsManager(getStaticOuterContext(), service);
++                }});
++        // END privacy-added
+     }
+ 
+     static ContextImpl getImpl(Context context) {
+@@ -1591,7 +1640,10 @@ class ContextImpl extends Context {
+     }
+ 
+     ContextImpl() {
+-        mOuterContext = this;
++        if (sOuterContext != null) {
++            Log.w(TAG, "PDroid:ContextImpl: ContextImpl being created but already has sOuterContext");
++        }
++        sOuterContext = mOuterContext = this;
+     }
+ 
+     /**
+@@ -1606,7 +1658,12 @@ class ContextImpl extends Context {
+         mResources = context.mResources;
+         mMainThread = context.mMainThread;
+         mContentResolver = context.mContentResolver;
+-        mOuterContext = this;
++        
++        if (sOuterContext != null) {
++            Log.w(TAG, "PDroid:ContextImpl: ContextImpl being created but already has sOuterContext");
++        }
++
++        sOuterContext = mOuterContext = this;
+     }
+ 
+     final void init(LoadedApk packageInfo,
+@@ -1666,13 +1723,21 @@ class ContextImpl extends Context {
+     }
+ 
+     final void setOuterContext(Context context) {
+-        mOuterContext = context;
++        if (sOuterContext != null) {
++            Log.w(TAG, "PDroid:ContextImpl: ContextImpl being created but already has sOuterContext");
++        }
++
++        sOuterContext = mOuterContext = context;
+     }
+ 
+     final Context getOuterContext() {
+         return mOuterContext;
+     }
+ 
++    final static Context getStaticOuterContext() {
++        return sOuterContext;
++    }
++
+     final IBinder getActivityToken() {
+         return mActivityToken;
+     }
+diff --git a/core/java/android/app/Instrumentation.java b/core/java/android/app/Instrumentation.java
+index cad4b01..0121ae0 100644
+--- a/core/java/android/app/Instrumentation.java
++++ b/core/java/android/app/Instrumentation.java
+@@ -47,6 +47,13 @@ import java.io.File;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
++///////////////////////////////////////////////////
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++import android.telephony.TelephonyManager;
++///////////////////////////////////////////////////
++
+ 
+ /**
+  * Base class for implementing application instrumentation code.  When running
+@@ -87,6 +94,10 @@ public class Instrumentation {
+     private boolean mAutomaticPerformanceSnapshots = false;
+     private PerformanceCollector mPerformanceCollector;
+     private Bundle mPerfMetrics = new Bundle();
++    
++    //---------------------------------------------------------------------------------------------------------------------------------------------------------
++    private PrivacySettingsManager mPrvSvc;
++    //---------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+     public Instrumentation() {
+     }
+@@ -1390,6 +1401,79 @@ public class Instrumentation {
+             Context who, IBinder contextThread, IBinder token, Activity target,
+             Intent intent, int requestCode, Bundle options) {
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
++        
++        // BEGIN privacy-added
++        boolean allowIntent = true;
++        try{
++        	Log.d(TAG,"PDroid:Instrumentation:execStartActivity: execStartActivity for " + who.getPackageName());
++            if (intent.getAction() != null && (intent.getAction().equals(Intent.ACTION_CALL) || intent.getAction().equals(Intent.ACTION_DIAL))){
++                allowIntent = false;
++                Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Intent action = Intent.ACTION_CALL or Intent.ACTION_DIAL for " + who.getPackageName());
++        		if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++        		    mPrvSvc = new PrivacySettingsManager(who, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++        		    if (mPrvSvc != null) {
++        		        Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Obtained privacy service");
++        		    } else {
++        		        Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Privacy service not obtained");
++        		    }
++        		} else {
++        		    Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Already had privacy service");
++        		}
++        		
++        		if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++        		    Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Privacy service not available: rejecting call attempt");
++        		    allowIntent = false;
++        		    mPrvSvc.notification(who.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_PHONE_CALL, null);
++        		} else {
++            		PrivacySettings privacySettings = mPrvSvc.getSettings(who.getPackageName());
++            		if (privacySettings == null) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Call allowed: No settings for package: " + who.getPackageName());
++                        allowIntent = true;
++                        mPrvSvc.notification(who.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_PHONE_CALL, null);
++            		} else if (privacySettings.getPhoneCallSetting() == PrivacySettings.REAL) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Call allowed: Settings permit " + who.getPackageName());
++                        allowIntent = true;
++                        mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++            		} else {
++            		    Log.d(TAG,"PDroid:Instrumentation:execStartActivity: Call denied: Settings deny " + who.getPackageName());
++            		    // No settings = allowed; any phone call setting but real == disallowed
++            		    
++                		allowIntent = false;
++                		
++                		// test if broadcasting works! SM: I don't know what 'test if broadcasting works' means.
++                		// Send the notification intent
++                		final Context tmp = who;
++                		// SM: the BLOCKED_PHONE_CALL intent is handled by the privacy service to fake a change in call state
++                		new Thread(new Runnable() {
++                		    public void run() {
++                		        // SM: Not clear why there is this delay
++                		    	try{
++                 		    		Thread.sleep(1000); //wait 1 Second
++                 		    	} catch(Exception e){
++                 		    		//nothing here
++                 		    	}  
++                		    	Intent privacy = new Intent("android.privacy.BLOCKED_PHONE_CALL");
++                        		Bundle extras = new Bundle();
++                        		extras.putString("packageName", tmp.getPackageName());
++                        		extras.putInt("phoneState", TelephonyManager.CALL_STATE_IDLE);
++                        		privacy.putExtras(extras);
++                        		tmp.sendBroadcast(privacy);
++                        		Log.i("PrivacyContext","sent privacy intent");
++                		    }
++                		}).start();
++                		mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++            		}
++        		}
++            }
++        } catch(Exception e){
++        	 if(who != null) {
++        	     Log.e(TAG,"PDroid:Instrumentation:execStartActivity: Exception occurred handling intent for " + who.getPackageName(), e);
++        	 } else {
++        	     Log.e(TAG,"PDroid:Instrumentation:execStartActivity: Exception occurred handling intent for unknown package", e);
++        	 }
++        }
++        // END privacy-added
++        
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+                 final int N = mActivityMonitors.size();
+@@ -1405,6 +1489,16 @@ public class Instrumentation {
+                 }
+             }
+         }
++        
++        // BEGIN privacy-added
++        try{
++        	if (!allowIntent) return new ActivityResult(requestCode, intent);
++        } catch(Exception e) {
++            Log.e(TAG,"PDroid:Instrumentation:execStartActivity: Exception occurred while trying to create ActivityResult", e);
++        	return null;
++        }
++    	// END privacy-added
++        
+         try {
+             intent.setAllowFds(false);
+             intent.migrateExtraStreamToClipData();
+@@ -1430,6 +1524,109 @@ public class Instrumentation {
+     public void execStartActivities(Context who, IBinder contextThread,
+             IBinder token, Activity target, Intent[] intents, Bundle options) {
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
++
++        // BEGIN privacy-added
++        
++        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: execStartActivities for " + who.getPackageName());
++        if (intents != null) {
++            boolean checkPrivacySettings = false;
++
++            // If any intents are Intent.ACTION_CALL or Intent.ACTION_DIAL, need to check permissions
++            for (Intent intent : intents) {
++                try {
++                    if (intent.getAction() != null && (
++                            intent.getAction().equals(Intent.ACTION_CALL) ||
++                            intent.getAction().equals(Intent.ACTION_DIAL))) {
++                        checkPrivacySettings = true;
++                        break;
++                    }
++                } catch (Exception e) {
++                    Log.e(TAG,"PDroid:Instrumentation:execStartActivities: Exception occurred when checking intents for " + who.getPackageName(), e);
++                    // If an exception occurred, then check the privacy settings as the default action
++                    checkPrivacySettings = true;
++                }
++            }
++
++            if (!checkPrivacySettings) {
++                Log.d(TAG,"PDroid:Instrumentation:execStartActivities: No provided intents triggered checking for " + who.getPackageName());
++            } else {
++                Log.d(TAG,"PDroid:Instrumentation:execStartActivities: One or more intents triggered checking for " + who.getPackageName());
++
++                if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++                    mPrvSvc = new PrivacySettingsManager(who, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++                    if (mPrvSvc != null) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Obtained privacy service");
++                    } else {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Privacy service not obtained");
++                    }
++                } else {
++                    Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Already had privacy service");
++                }
++
++                boolean allowCallIntents = false; 
++                if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++                    Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Privacy service not available - assuming permission denied");
++                    allowCallIntents = false;
++                    mPrvSvc.notification(who.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_PHONE_CALL, null);
++                } else {
++                    PrivacySettings privacySettings = mPrvSvc.getSettings(who.getPackageName());
++                    if (privacySettings == null) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Call intents allowed: No settings for package: " + who.getPackageName());
++                        allowCallIntents = true;
++                        mPrvSvc.notification(who.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_PHONE_CALL, null);
++                    } else if (privacySettings.getPhoneCallSetting() == PrivacySettings.REAL) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Call intents allowed: Settings permit " + who.getPackageName());
++                        allowCallIntents = true;
++                        mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++                    } else {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivities: Call intents denied: Settings deny " + who.getPackageName());
++                        allowCallIntents = false;
++                        mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++                    }
++                }
++
++                // If call intents are not allowed, need to regenerate the
++                // intents list to remove call-related intents
++                if (!allowCallIntents) {
++                    List<Intent> filteredIntents = new ArrayList<Intent>(intents.length);
++                    for (Intent intent : intents) {
++                        try {
++                            if (intent.getAction() == null || !(
++                                    intent.getAction().equals(Intent.ACTION_CALL) ||
++                                    intent.getAction().equals(Intent.ACTION_DIAL))) {
++                                filteredIntents.add(intent);
++                            }
++                        } catch (Exception e) {
++                            Log.e(TAG,"PDroid:Instrumentation:execStartActivities: Exception occurred when checking intent for " + who.getPackageName(), e);
++                        }
++                    }
++                    intents = filteredIntents.toArray(new Intent [filteredIntents.size()]);
++                    
++                    // Send the notification intent
++                    final Context tmp = who;
++                    // SM: the BLOCKED_PHONE_CALL intent is handled by the privacy service to fake a change in call state
++                    new Thread(new Runnable() {
++                        public void run() {
++                            // SM: Not clear why there is this delay
++                            try{
++                                Thread.sleep(1000); //wait 1 Second
++                            } catch(Exception e){
++                                //nothing here
++                            }  
++                            Intent privacy = new Intent("android.privacy.BLOCKED_PHONE_CALL");
++                            Bundle extras = new Bundle();
++                            extras.putString("packageName", tmp.getPackageName());
++                            extras.putInt("phoneState", TelephonyManager.CALL_STATE_IDLE);
++                            privacy.putExtras(extras);
++                            tmp.sendBroadcast(privacy);
++                            Log.i("PrivacyContext","sent privacy intent");
++                        }
++                    }).start();
++                }
++            }
++        }
++        // END privacy-added
++        
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+                 final int N = mActivityMonitors.size();
+@@ -1489,6 +1686,77 @@ public class Instrumentation {
+         Context who, IBinder contextThread, IBinder token, Fragment target,
+         Intent intent, int requestCode, Bundle options) {
+         IApplicationThread whoThread = (IApplicationThread) contextThread;
++        // BEGIN privacy-added
++        boolean allowIntent = true;
++        try{
++            Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): execStartActivity for " + who.getPackageName());
++            if (intent.getAction() != null && (intent.getAction().equals(Intent.ACTION_CALL) || intent.getAction().equals(Intent.ACTION_DIAL))){
++                allowIntent = false;
++                Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Intent action = Intent.ACTION_CALL or Intent.ACTION_DIAL for " + who.getPackageName());
++                if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++                    mPrvSvc = new PrivacySettingsManager(who, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++                    if (mPrvSvc != null) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Obtained privacy service");
++                    } else {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Privacy service not obtained");
++                    }
++                } else {
++                    Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Already had privacy service");
++                }
++                
++                if (mPrvSvc == null || !mPrvSvc.isServiceAvailable()) {
++                    Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Privacy service not available: rejecting call attempt");
++                    allowIntent = false;
++                    mPrvSvc.notification(who.getPackageName(), PrivacySettings.EMPTY, PrivacySettings.DATA_PHONE_CALL, null);
++                } else {
++                    PrivacySettings privacySettings = mPrvSvc.getSettings(who.getPackageName());
++                    if (privacySettings == null) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Call allowed: No settings for package: " + who.getPackageName());
++                        allowIntent = true;
++                        mPrvSvc.notification(who.getPackageName(), PrivacySettings.REAL, PrivacySettings.DATA_PHONE_CALL, null);
++                    } else if (privacySettings.getPhoneCallSetting() == PrivacySettings.REAL) {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Call allowed: Settings permit " + who.getPackageName());
++                        allowIntent = true;
++                        mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++                    } else {
++                        Log.d(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Call denied: Settings deny " + who.getPackageName());
++                        // No settings = allowed; any phone call setting but real == disallowed
++                        
++                        // test if broadcasting works! SM: I don't know what 'test if broadcasting works' means.
++                        // Send the notification intent
++                        final Context tmp = who;
++                        allowIntent = false;
++                        // SM: Why is all of this done? It seems like a weirdly unnecessary bit of code...
++                        new Thread(new Runnable() {
++                            public void run() {
++                                // SM: Not clear why there is this delay
++                                try{
++                                    Thread.sleep(1000); //wait 1 Second
++                                } catch(Exception e){
++                                    //nothing here
++                                }  
++                                Intent privacy = new Intent("android.privacy.BLOCKED_PHONE_CALL");
++                                Bundle extras = new Bundle();
++                                extras.putString("packageName", tmp.getPackageName());
++                                extras.putInt("phoneState", TelephonyManager.CALL_STATE_IDLE);
++                                privacy.putExtras(extras);
++                                tmp.sendBroadcast(privacy);
++                                Log.i("PrivacyContext","sent privacy intent");
++                            }
++                        }).start();
++                        mPrvSvc.notification(who.getPackageName(), privacySettings.getPhoneCallSetting(), PrivacySettings.DATA_PHONE_CALL, null);
++                    }
++                }
++            }
++        } catch(Exception e){
++             if(who != null) {
++                 Log.e(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Exception occurred handling intent for " + who.getPackageName(), e);
++             } else {
++                 Log.e(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Exception occurred handling intent for unknown package", e);
++             }
++        }
++        // END privacy-added
++        
+         if (mActivityMonitors != null) {
+             synchronized (mSync) {
+                 final int N = mActivityMonitors.size();
+@@ -1504,6 +1772,16 @@ public class Instrumentation {
+                 }
+             }
+         }
++        
++        // BEGIN privacy-added
++        try{
++            if (!allowIntent) return new ActivityResult(requestCode, intent);
++        } catch(Exception e) {
++            Log.e(TAG,"PDroid:Instrumentation:execStartActivity (with Fragments): Exception occurred while trying to create ActivityResult", e);
++            return null;
++        }
++        // END privacy-added
++        
+         try {
+             intent.setAllowFds(false);
+             intent.migrateExtraStreamToClipData();
+diff --git a/core/java/android/content/ContentResolver.java b/core/java/android/content/ContentResolver.java
+index 0a5a26a..cdd7630 100644
+--- a/core/java/android/content/ContentResolver.java
++++ b/core/java/android/content/ContentResolver.java
+@@ -43,6 +43,10 @@ import android.text.TextUtils;
+ import android.util.EventLog;
+ import android.util.Log;
+ 
++// BEGIN privacy-added
++import android.privacy.surrogate.PrivacyContentResolver;
++// END privacy-added
++
+ import java.io.File;
+ import java.io.FileInputStream;
+ import java.io.FileNotFoundException;
+@@ -369,6 +373,10 @@ public abstract class ContentResolver {
+             try {
+                 qCursor = unstableProvider.query(uri, projection,
+                         selection, selectionArgs, sortOrder, remoteCancellationSignal);
++                // BEGIN privacy-added
++                // Log.d(TAG, "PDroid:ContentResolver:wrapping content resolver in PrivacyContentResolver");
++                qCursor = PrivacyContentResolver.enforcePrivacyPermission(uri, projection, mContext, qCursor);
++                // END privacy-added
+             } catch (DeadObjectException e) {
+                 // The remote process has died...  but we only hold an unstable
+                 // reference though, so we might recover!!!  Let's try!!!!
+@@ -380,6 +388,11 @@ public abstract class ContentResolver {
+                 }
+                 qCursor = stableProvider.query(uri, projection,
+                         selection, selectionArgs, sortOrder, remoteCancellationSignal);
++                // BEGIN privacy-added
++                // Log.d(TAG, "PDroid:ContentResolver:wrapping content resolver in PrivacyContentResolver");
++        		qCursor = PrivacyContentResolver.enforcePrivacyPermission(uri, projection, mContext, qCursor);
++        		// END privacy-added
++
+             }
+             if (qCursor == null) {
+                 return null;
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 37d15c8..f1013c0 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -37,6 +37,26 @@ import java.util.List;
+ import java.util.StringTokenizer;
+ import java.util.concurrent.locks.ReentrantLock;
+ 
++///////////////////////////////////////////////////////
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++
++import android.content.Context;
++import android.content.pm.IPackageManager;
++import android.content.pm.PackageManager;
++
++import android.os.Process;
++import android.os.ServiceManager;
++import java.util.Random;
++
++import java.io.ByteArrayOutputStream;
++import java.io.File;
++import java.io.FileInputStream;
++import android.graphics.Bitmap;
++import android.graphics.BitmapFactory;
++///////////////////////////////////////////////////////
++
+ /**
+  * The Camera class is used to set image capture settings, start/stop preview,
+  * snap pictures, and retrieve frames for encoding for video.  This class is a
+@@ -160,6 +180,157 @@ public class Camera {
+     private boolean mFaceDetectionRunning = false;
+     private Object mAutoFocusCallbackLock = new Object();
+ 
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++
++    private static final int IS_ALLOWED = -1;
++    private static final int IS_NOT_ALLOWED = -2;
++    private static final int GOT_ERROR = -3;
++    
++    private static final String PRIVACY_TAG = "PM,Camera";
++
++    private Context context;
++    
++    private PrivacySettingsManager pSetMan;
++    
++    private boolean privacyMode = false;
++    
++    private IPackageManager mPm;
++    
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY
++    /**
++     * {@hide}
++     * @return package names of current process which is using this object or null if something went wrong
++     */
++    private String[] getPackageName(){
++    	try{
++    		if(mPm != null){
++        		int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++        	}
++    		else{
++    			mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++    			int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++    		}
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++    		return null;
++    	}
++    }
++    /**
++     * This method returns the fake image which should be in system folder! 
++     * @return byte array of jpeg fake image or null if something went wrong
++     * {@hide}
++     */
++    private byte[] getFakeImage(){
++	try{
++		String filepath = "/system/media/PDroid.jpeg";
++        	File imagefile = new File(filepath);
++        	FileInputStream fis = null;
++        	
++          	fis = new FileInputStream(imagefile);
++        	
++       	 	Bitmap bm = BitmapFactory.decodeStream(fis);
++        	ByteArrayOutputStream helper = new ByteArrayOutputStream();  
++        	bm.compress(Bitmap.CompressFormat.JPEG, 100 , helper);    
++		return helper.toByteArray();
++	}
++	catch (Exception e){
++		Log.e(PRIVACY_TAG,"something went wrong with getting the picture!");
++		e.printStackTrace();
++		return null;
++	}
++    }
++    /**
++     * {@hide}
++     * This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++     * -> privacyMode = true ok! otherwise false!
++     * CALL THIS METHOD IN CONSTRUCTOR!
++     */
++    private void initiate(){
++    	try{
++    		context = null;
++    		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    		mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++       	 	privacyMode = true;
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++    		privacyMode = false;
++    	}
++    }
++
++    /**
++     * {@hide}
++     * This method should be used, because in some devices the uid has more than one package within!
++     * @return IS_ALLOWED (-1) if all packages allowed, IS_NOT_ALLOWED(-2) if one of these packages not allowed, GOT_ERROR (-3) if something went wrong
++     */
++    private int checkIfPackagesAllowed(){
++    	try{
++    		//boolean isAllowed = false;
++    		if(pSetMan != null){
++    			PrivacySettings pSet = null;
++	    		String[] package_names = getPackageName();
++	    		int uid = Process.myUid();
++	    		if(package_names != null){
++	    		
++		        	for(int i=0;i < package_names.length; i++){
++		        		pSet = pSetMan.getSettings(package_names[i], uid);
++		        		if(pSet != null && (pSet.getCameraSetting() != PrivacySettings.REAL)){ //if pSet is null, we allow application to access to mic
++		        			return IS_NOT_ALLOWED;
++		        		}
++		        		pSet = null;
++		        	}
++			    	return IS_ALLOWED;
++	    		}
++	    		else{
++	    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because package_names are NULL");
++	    			return GOT_ERROR;
++	    		}
++    		}
++    		else{
++    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because pSetMan is NULL");
++    			return GOT_ERROR;
++    		}
++    	}
++    	catch (Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"Got exception in checkIfPackagesAllowed");
++    		return GOT_ERROR;
++    	}
++    }
++    
++    /**
++     * Loghelper method, true = access successful, false = blocked access
++     * {@hide}
++     */
++    private void dataAccess(boolean success){
++	String package_names[] = getPackageName();
++	if(success && package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing camera.");
++	}
++	else if(package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing camera.");
++	}
++    }
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+     /**
+      * Broadcast Action:  A new picture is taken by the camera, and the entry of
+      * the picture has been added to the media store.
+@@ -311,6 +482,14 @@ public class Camera {
+         mCameraDataCallback = null;
+         mCameraMetaDataCallback = null;
+ 
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++        //BEGIN PRIVACY
++        
++        initiate();
++        
++        //END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         Looper looper;
+         if ((looper = Looper.myLooper()) != null) {
+             mEventHandler = new EventHandler(this, looper);
+@@ -733,6 +912,27 @@ public class Camera {
+ 
+         @Override
+         public void handleMessage(Message msg) {
++	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++            //BEGIN PRIVACY
++
++	    boolean access = true;
++	    if(!privacyMode){
++		initiate();
++	    }
++	    String packageName[] = getPackageName();
++	    if(checkIfPackagesAllowed() == IS_NOT_ALLOWED){
++		access = false;
++		dataAccess(false);
++		if(packageName != null)
++			pSetMan.notification(packageName[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_CAMERA, null, pSetMan.getSettings(packageName[0], Process.myUid()));
++	    }
++	    else{
++		dataAccess(true);
++		if(packageName != null)
++			pSetMan.notification(packageName[0], 0, PrivacySettings.REAL, PrivacySettings.DATA_CAMERA, null, pSetMan.getSettings(packageName[0], Process.myUid()));
++	    }
++
++
+             switch(msg.what) {
+             case CAMERA_MSG_SHUTTER:
+                 if (mShutterCallback != null) {
+@@ -742,13 +942,19 @@ public class Camera {
+ 
+             case CAMERA_MSG_RAW_IMAGE:
+                 if (mRawImageCallback != null) {
+-                    mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    if(access)
++                    	mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    else
++			mRawImageCallback.onPictureTaken(null, mCamera);//this normally doesn't get a call, because we disabled this receiver in takepicture method!
+                 }
+                 return;
+ 
+             case CAMERA_MSG_COMPRESSED_IMAGE:
+                 if (mJpegCallback != null) {
+-                    mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    if(access)
++                    	mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    else
++			mJpegCallback.onPictureTaken(getFakeImage(), mCamera);
+                 }
+                 return;
+ 
+@@ -766,18 +972,27 @@ public class Camera {
+                         // Set to oneshot mode again.
+                         setHasPreviewCallback(true, false);
+                     }
+-                    pCb.onPreviewFrame((byte[])msg.obj, mCamera);
++		    if(access)
++                    	pCb.onPreviewFrame((byte[])msg.obj, mCamera);//leave the camera the preview frame!
++		    else
++			pCb.onPreviewFrame(getFakeImage(), mCamera);//here we go testing if it is able to give preview of fake image, if it doesn't work -> pass null
+                 }
+                 return;
+ 
+             case CAMERA_MSG_META_DATA:
+                 if (mCameraMetaDataCallback != null) {
+-                    mCameraMetaDataCallback.onCameraMetaData((int[])msg.obj, mCamera);
++		    if(access)
++                    	mCameraMetaDataCallback.onCameraMetaData((int[])msg.obj, mCamera);
++		    else
++			mCameraMetaDataCallback.onCameraMetaData(null, mCamera);
+                 }
+                 return;
+             case CAMERA_MSG_POSTVIEW_FRAME:
+                 if (mPostviewCallback != null) {
+-                    mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    if(access)
++                    	mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
++		    else
++			mPostviewCallback.onPictureTaken(getFakeImage(), mCamera);//same as in onpreviewframe -> give test fake image
+                 }
+                 return;
+ 
+@@ -822,6 +1037,8 @@ public class Camera {
+                 return;
+             }
+         }
++        //END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     }
+ 
+     private static int byteToInt(byte[] b, int offset) {
+@@ -1160,6 +1377,28 @@ public class Camera {
+         mPostviewCallback = postview;
+         mJpegCallback = jpeg;
+ 
++
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++        //BEGIN PRIVACY
++	//check if we are in privacy mode!, this is a to hard method to prevent from making pictures, because camera will freeze!	
++	if(!privacyMode){
++		initiate();
++	}
++	if(checkIfPackagesAllowed() == IS_NOT_ALLOWED){
++//		mShutterCallback = null;
++        	mRawImageCallback = null;
++		Log.i(PRIVACY_TAG,"blocked rawImageCallback -> it will never be called!");
++//        	mPostviewCallback = null;
++//        	mJpegCallback = null;
++//		dataAccess(false);
++	}
++//	else{
++//		dataAccess(true);
++//	}
++	//END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+         // If callback is not set, do not send me callbacks.
+         int msgType = 0;
+         if (mShutterCallback != null) {
+diff --git a/core/java/android/net/NetworkInfo.java b/core/java/android/net/NetworkInfo.java
+index 0bc6b58..6ac5376 100644
+--- a/core/java/android/net/NetworkInfo.java
++++ b/core/java/android/net/NetworkInfo.java
+@@ -162,6 +162,14 @@ public class NetworkInfo implements Parcelable {
+         }
+     }
+ 
++    // BEGIN privacy-added
++    // SM: I've no idea where this is used
++    /**{@hide}* Used for set state to get better working Privacy*/
++    public void setState(State state){
++	   this.mState = state;
++    }
++    // END privacy-added
++
+     /**
+      * Reports the type of network to which the
+      * info in this {@code NetworkInfo} pertains.
+diff --git a/core/java/android/os/SystemProperties.java b/core/java/android/os/SystemProperties.java
+index a9584d0..60e3757 100644
+--- a/core/java/android/os/SystemProperties.java
++++ b/core/java/android/os/SystemProperties.java
+@@ -21,6 +21,22 @@ import java.util.ArrayList;
+ 
+ import android.util.Log;
+ 
++//-----------------------------------------------------------
++import com.android.internal.telephony.TelephonyProperties;
++
++import android.os.Process;
++import android.os.ServiceManager;
++
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++
++import android.content.Context;
++import android.content.pm.IPackageManager;
++import android.content.pm.PackageManager;
++import android.os.Binder;
++//----------------------------------------------------------
++
+ 
+ /**
+  * Gives access to the system properties store.  The system properties
+@@ -45,6 +61,128 @@ public class SystemProperties
+     private static native void native_set(String key, String def);
+     private static native void native_add_change_callback();
+ 
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++
++    private static final int IS_ALLOWED = -1;
++    private static final int IS_NOT_ALLOWED = -2;
++    private static final int GOT_ERROR = -3;
++    
++    private static final String PRIVACY_TAG = "SystemProperties";
++    private static Context context;
++    
++    private static PrivacySettingsManager pSetMan;
++    
++    private static boolean privacyMode = false;
++    
++    private static IPackageManager mPm;
++    
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY
++    /**
++     * {@hide}
++     * @return package names of current process which is using this object or null if something went wrong
++     */
++    private static String[] getPackageName(){
++    	try{
++    		if(mPm != null){
++        		int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++        	}
++    		else{
++    			mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++    			int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++    		}
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++    		return null;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++     * -> privacyMode = true ok! otherwise false!
++     * CALL THIS METHOD IN CONSTRUCTOR!
++     */
++    private static void initiate(){
++    	try{
++    		context = null;
++    		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    		mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++       	 	privacyMode = true;
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++    		privacyMode = false;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method should be used, because in some devices the uid has more than one package within!
++     * @return IS_ALLOWED (-1) if all packages allowed, IS_NOT_ALLOWED(-2) if one of these packages not allowed, GOT_ERROR (-3) if something went wrong
++     */
++    private static int checkIfPackagesAllowed(){
++    	try{
++    		//boolean isAllowed = false;
++    		if(pSetMan != null){
++    			PrivacySettings pSet = null;
++	    		String[] package_names = getPackageName();
++	    		int uid = Process.myUid();
++	    		if(package_names != null){
++	    		
++		        	for(int i=0;i < package_names.length; i++){
++		        		pSet = pSetMan.getSettings(package_names[i], uid);
++		        		if(pSet != null && (pSet.getNetworkInfoSetting() != PrivacySettings.REAL)){ //if pSet is null, we allow application to access to mic
++		        			return IS_NOT_ALLOWED;
++		        		}
++		        		pSet = null;
++		        	}
++			    	return IS_ALLOWED;
++	    		}
++	    		else{
++	    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because package_names are NULL");
++	    			return GOT_ERROR;
++	    		}
++    		}
++    		else{
++    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because pSetMan is NULL");
++    			return GOT_ERROR;
++    		}
++    	}
++    	catch (Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"Got exception in checkIfPackagesAllowed");
++    		return GOT_ERROR;
++    	}
++    }
++    /**
++     * Loghelper method, true = access successful, false = blocked access
++     * {@hide}
++     */
++    private static void dataAccess(boolean success){
++	String package_names[] = getPackageName();
++	if(success && package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing networkinfo.");
++	}
++	else if(package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing networkinfo.");
++	}
++    }
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
++
++
+     /**
+      * Get the value for the given key.
+      * @return an empty string if the key isn't found
+@@ -54,6 +192,15 @@ public class SystemProperties
+         if (key.length() > PROP_NAME_MAX) {
+             throw new IllegalArgumentException("key.length > " + PROP_NAME_MAX);
+         }
++        if (key.equals(TelephonyProperties.PROPERTY_OPERATOR_ALPHA)   || 
++            key.equals(TelephonyProperties.PROPERTY_OPERATOR_NUMERIC)     ){
++		initiate();
++		if (checkIfPackagesAllowed() == IS_NOT_ALLOWED) {
++			dataAccess(false);
++			return "";
++		}
++		dataAccess(true);
++	}
+         return native_get(key);
+     }
+ 
+@@ -66,6 +213,15 @@ public class SystemProperties
+         if (key.length() > PROP_NAME_MAX) {
+             throw new IllegalArgumentException("key.length > " + PROP_NAME_MAX);
+         }
++	if (key.equals(TelephonyProperties.PROPERTY_OPERATOR_ALPHA)   || 
++            key.equals(TelephonyProperties.PROPERTY_OPERATOR_NUMERIC)     ){
++		initiate();
++		if (checkIfPackagesAllowed() == IS_NOT_ALLOWED) {
++			dataAccess(false);
++			return "";
++		}
++		dataAccess(true);
++	}
+         return native_get(key, def);
+     }
+ 
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index ee9bb69..ff9b8d1 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -55,6 +55,17 @@ import java.net.URISyntaxException;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ 
++//////////////////////////////////////////////////
++import android.content.pm.IPackageManager;
++import android.os.ServiceManager;
++import android.os.Process;
++import java.util.Random;
++
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++//////////////////////////////////////////////////
++
+ /**
+  * The Settings provider contains global system-level device preferences.
+  */
+@@ -3266,7 +3277,71 @@ public final class Settings {
+             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_PATTERN_SIZE);
+             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_BEFORE_UNLOCK);
+         }
+-
++        
++		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++		//BEGIN PRIVACY 
++		
++		private static final String PRIVACY_TAG = "PM,SecureSettings";
++		private static Context context;
++		
++		private static PrivacySettingsManager pSetMan;
++		
++		private static boolean privacyMode = false;
++		
++		private static IPackageManager mPm;
++		
++		//END PRIVACY 		
++		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++		
++		
++		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++		//BEGIN PRIVACY
++		
++		/**
++		* {@hide}
++		* @return package names of current process which is using this object or null if something went wrong
++		*/
++		private static String[] getPackageName(){
++			try{
++				if(mPm != null){
++					int uid = Process.myUid();
++					final String[] package_names = mPm.getPackagesForUid(uid);
++					return package_names;
++				}
++				else{
++					mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++					int uid = Process.myUid();
++					final String[] package_names = mPm.getPackagesForUid(uid);
++					return package_names;
++				}
++			}
++			catch(Exception e){
++				e.printStackTrace();
++				Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++				return null;
++			}
++		}
++		/**
++		* {@hide}
++		* This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++		* -> privacyMode = true ok! otherwise false!
++		*/
++		private static void initiate(){
++			try{
++				context = null;
++				pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++				mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++				privacyMode = true;
++			}
++			catch(Exception e){
++				e.printStackTrace();
++				Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++				privacyMode = false;
++			}
++		}
++		//END PRIVACY
++		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++        
+         /**
+          * Look up a name in the database.
+          * @param resolver to access the database with
+@@ -3278,7 +3353,45 @@ public final class Settings {
+                 sNameValueCache = new NameValueCache(SYS_PROP_SETTING_VERSION, CONTENT_URI,
+                                                      CALL_METHOD_GET_SECURE);
+             }
+-
++            
++			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++			//BEGIN PRIVACY
++			if(name.equals(ANDROID_ID)){ //normally it should work with sNameValueCache.getString instead of sLockSettings
++				initiate();
++				try{
++					if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++					if(mPm == null) mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++					PrivacySettings settings = null;
++					final String[] packages = getPackageName();
++					if(packages != null && packages.length > 0){
++						for(int i = 0; i < packages.length; i++){
++							settings = pSetMan.getSettings(packages[i]);
++							if(settings != null && settings.getAndroidIdSetting() != PrivacySettings.REAL){
++								String output = settings.getAndroidID();
++								if(output != null){
++									pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, output, null);
++									return output;
++								} else{
++									pSetMan.notification(packages[i], 0, settings.getAndroidIdSetting(), PrivacySettings.DATA_ANDROID_ID, "q4a5w896ay21dr46", null);
++									return "q4a5w896ay21dr46"; //we can not pull out empty android id, because we get bootlops then
++								}
++							}
++							if(i == packages.length - 1) //package is allowed to get android id
++								pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
++							settings = null;
++						}
++					} else{
++						pSetMan.notification(packages[packages.length - 1], 0, PrivacySettings.REAL, PrivacySettings.DATA_ANDROID_ID, null, null);
++					}
++				}
++				catch (Exception e){
++					e.printStackTrace();
++					Log.e(PRIVACY_TAG,"Got exception in  getString()");
++				}
++			}
++			//END PRIVACY
++			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++            
+             if (sLockSettings == null) {
+                 sLockSettings = ILockSettings.Stub.asInterface(
+                         (IBinder) ServiceManager.getService("lock_settings"));
+diff --git a/core/java/android/speech/srec/MicrophoneInputStream.java b/core/java/android/speech/srec/MicrophoneInputStream.java
+index fab77a9..b0f5f9c 100644
+--- a/core/java/android/speech/srec/MicrophoneInputStream.java
++++ b/core/java/android/speech/srec/MicrophoneInputStream.java
+@@ -24,6 +24,20 @@ import java.io.IOException;
+ import java.io.InputStream;
+ import java.lang.IllegalStateException;
+ 
++//BEGIN PRIVACY
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++
++import android.content.Context;
++import android.content.pm.IPackageManager;
++import android.content.pm.PackageManager;
++
++import android.os.Process;
++import android.os.ServiceManager;
++import android.util.Log;
++//END PRIVACY
++
+ 
+ /**
+  * PCM input stream from the microphone, 16 bits per sample.
+@@ -32,11 +46,137 @@ public final class MicrophoneInputStream extends InputStream {
+     static {
+         System.loadLibrary("srec_jni");
+     }
++
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++
++    private static final int IS_ALLOWED = -1;
++    private static final int IS_NOT_ALLOWED = -2;
++    private static final int GOT_ERROR = -3;
++    
++    private static final String PRIVACY_TAG = "PM,MicrophoneInputStream";
++    private Context context;
++    
++    private PrivacySettingsManager pSetMan;
+     
++    private boolean privacyMode = false;
++    
++    private IPackageManager mPm;
++    
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    
++
+     private final static String TAG = "MicrophoneInputStream";
+     private int mAudioRecord = 0;
+     private byte[] mOneByte = new byte[1];
+     
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY
++    /**
++     * {@hide}
++     * @return package names of current process which is using this object or null if something went wrong
++     */
++    private String[] getPackageName(){
++    	try{
++    		if(mPm != null){
++        		int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++        	}
++    		else{
++    			mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++    			int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++    		}
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++    		return null;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++     * -> privacyMode = true ok! otherwise false!
++     * CALL THIS METHOD IN CONSTRUCTOR!
++     */
++    private void initiate(){
++    	try{
++    		context = null;
++    		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    		mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++       	 	privacyMode = true;
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++    		privacyMode = false;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method should be used, because in some devices the uid has more than one package within!
++     * @return IS_ALLOWED (-1) if all packages allowed, IS_NOT_ALLOWED(-2) if one of these packages not allowed, GOT_ERROR (-3) if something went wrong
++     */
++    private int checkIfPackagesAllowed(){
++    	try{
++    		//boolean isAllowed = false;
++    		if(pSetMan != null){
++    			PrivacySettings pSet = null;
++	    		String[] package_names = getPackageName();
++	    		int uid = Process.myUid();
++	    		if(package_names != null){
++	    		
++		        	for(int i=0;i < package_names.length; i++){
++		        		pSet = pSetMan.getSettings(package_names[i], uid);
++		        		if(pSet != null && (pSet.getRecordAudioSetting() != PrivacySettings.REAL)){ //if pSet is null, we allow application to access to mic
++		        			return IS_NOT_ALLOWED;
++		        		}
++		        		pSet = null;
++		        	}
++			    	return IS_ALLOWED;
++	    		}
++	    		else{
++	    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because package_names are NULL");
++	    			return GOT_ERROR;
++	    		}
++    		}
++    		else{
++    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because pSetMan is NULL");
++    			return GOT_ERROR;
++    		}
++    	}
++    	catch (Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"Got exception in checkIfPackagesAllowed");
++    		return GOT_ERROR;
++    	}
++    }
++    /**
++     * Loghelper method, true = access successful, false = blocked access
++     * {@hide}
++     */
++    private void dataAccess(boolean success){
++	String package_names[] = getPackageName();
++	if(success && package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing microphone.");
++	}
++	else if(package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing microphone.");
++	}
++    }
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
++
+     /**
+      * MicrophoneInputStream constructor.
+      * @param sampleRate sample rate of the microphone, typically 11025 or 8000.
+@@ -44,6 +184,28 @@ public final class MicrophoneInputStream extends InputStream {
+      * This determines how long an application may delay before losing data.
+      */
+     public MicrophoneInputStream(int sampleRate, int fifoDepth) throws IOException {
++
++
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++  	//BEGIN PRIVACY
++	if(!privacyMode){
++    		initiate();
++    	}
++	if(checkIfPackagesAllowed() == IS_NOT_ALLOWED){
++		dataAccess(false);
++		String packageName[] = getPackageName();
++		if(packageName != null)
++			pSetMan.notification(packageName[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_RECORD_AUDIO, null, pSetMan.getSettings(packageName[0], Process.myUid()));
++		throw new IOException("AudioRecord constructor failed - busy?");
++	}
++	dataAccess(true);
++	String packageName[] = getPackageName();
++	if(packageName != null)
++		pSetMan.notification(packageName[0], 0, PrivacySettings.REAL, PrivacySettings.DATA_RECORD_AUDIO, null, pSetMan.getSettings(packageName[0], Process.myUid())); 
++ 	//END PRIVACY
++   	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+         mAudioRecord = AudioRecordNew(sampleRate, fifoDepth);
+         if (mAudioRecord == 0) throw new IOException("AudioRecord constructor failed - busy?");
+         int status = AudioRecordStart(mAudioRecord);
+diff --git a/media/java/android/media/AudioRecord.java b/media/java/android/media/AudioRecord.java
+index df4e67d..d88fd08 100644
+--- a/media/java/android/media/AudioRecord.java
++++ b/media/java/android/media/AudioRecord.java
+@@ -30,6 +30,22 @@ import android.os.Message;
+ import android.os.SystemProperties;
+ import android.util.Log;
+ 
++////////////////////////////////////////////
++import android.app.ActivityThread;
++import android.app.Application;
++import android.content.Context;
++import android.content.pm.IPackageManager;
++import android.content.pm.PackageManager;
++import android.os.Binder;
++
++import android.os.Process;
++import android.os.ServiceManager;
++
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++///////////////////////////////////////////
++
+ /**
+  * The AudioRecord class manages the audio resources for Java applications
+  * to record audio from the audio input hardware of the platform. This is
+@@ -191,6 +207,28 @@ public class AudioRecord
+      */
+     private int mSessionId = 0;
+ 
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++
++    private static final int IS_ALLOWED = -1;
++    private static final int IS_NOT_ALLOWED = -2;
++    private static final int GOT_ERROR = -3;
++    
++    private static final String PRIVACY_TAG = "PM,AudioRecord";
++    private Context context;
++    
++    private PrivacySettingsManager pSetMan;
++    
++    private boolean privacyMode = false;
++    
++    private IPackageManager mPm;
++    
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
++
+     //---------------------------------------------------------
+     // Constructor, Finalize
+     //--------------------
+@@ -243,12 +281,125 @@ public class AudioRecord
+             return; // with mState == STATE_UNINITIALIZED
+         }
+ 
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++        //BEGIN PRIVACY
++        
++        initiate();
++       
++        //END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         mSessionId = session[0];
+ 
+         mState = STATE_INITIALIZED;
+     }
+ 
+ 
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY
++    /**
++     * {@hide}
++     * @return package names of current process which is using this object or null if something went wrong
++     */
++    private String[] getPackageName(){
++    	try{
++    		if(mPm != null){
++        		int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++        	}
++    		else{
++    			mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++    			int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++    		}
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++    		return null;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++     * -> privacyMode = true ok! otherwise false!
++     * CALL THIS METHOD IN CONSTRUCTOR!
++     */
++    private void initiate(){
++    	try{
++    		context = null;
++    		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    		mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++       	 	privacyMode = true;
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++    		privacyMode = false;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method should be used, because in some devices the uid has more than one package within!
++     * @return IS_ALLOWED (-1) if all packages allowed, IS_NOT_ALLOWED(-2) if one of these packages not allowed, GOT_ERROR (-3) if something went wrong
++     */
++    private int checkIfPackagesAllowed(){
++    	try{
++    		//boolean isAllowed = false;
++    		if(pSetMan != null){
++    			PrivacySettings pSet = null;
++	    		String[] package_names = getPackageName();
++	    		int uid = Process.myUid();
++	    		if(package_names != null){
++	    		
++		        	for(int i=0;i < package_names.length; i++){
++		        		pSet = pSetMan.getSettings(package_names[i], uid);
++		        		if(pSet != null && (pSet.getRecordAudioSetting() != PrivacySettings.REAL)){ //if pSet is null, we allow application to access to mic
++		        			return IS_NOT_ALLOWED;
++		        		}
++		        		pSet = null;
++		        	}
++			    	return IS_ALLOWED;
++	    		}
++	    		else{
++	    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because package_names are NULL");
++	    			return GOT_ERROR;
++	    		}
++    		}
++    		else{
++    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because pSetMan is NULL");
++    			return GOT_ERROR;
++    		}
++    	}
++    	catch (Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"Got exception in checkIfPackagesAllowed");
++    		return GOT_ERROR;
++    	}
++    }
++    /**
++     * Loghelper method, true = access successful, false = blocked access
++     * {@hide}
++     */
++    private void dataAccess(boolean success){
++	String package_names[] = getPackageName();
++	if(success && package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing microphone.");
++	}
++	else if(package_names != null){
++		for(int i=0;i<package_names.length;i++)
++			Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing microphone.");
++	}
++    }
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
++
++
++
++
+     // Convenience method for the constructor's parameter checks.
+     // This is where constructor IllegalArgumentException-s are thrown
+     // postconditions:
+@@ -526,10 +677,27 @@ public class AudioRecord
+      */
+     public void startRecording()
+     throws IllegalStateException {
+-        if (mState != STATE_INITIALIZED) {
+-            throw(new IllegalStateException("startRecording() called on an "
+-                    +"uninitialized AudioRecord."));
++
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY
++    	//now check if everything was ok in constructor!
++    	if(!privacyMode){
++    		initiate();
++    	}
++        if ((mState != STATE_INITIALIZED) || (checkIfPackagesAllowed() == IS_NOT_ALLOWED)) { //If applicaton is not allowed -> throw exception!
++            dataAccess(false);
++	    String packageName[] = getPackageName();
++	    if(packageName != null)
++	    	pSetMan.notification(packageName[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_RECORD_AUDIO, null, pSetMan.getSettings(packageName[0], Process.myUid()));  
++            throw(new IllegalStateException("startRecording() called on an "+"uninitialized AudioRecord."));
+         }
++        dataAccess(true);
++	String packageName[] = getPackageName();
++	if(packageName != null)
++		pSetMan.notification(packageName[0], 0, PrivacySettings.REAL, PrivacySettings.DATA_RECORD_AUDIO, null, pSetMan.getSettings(packageName[0], Process.myUid())); 
++        //END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+ 
+         // start recording
+         synchronized(mRecordingStateLock) {
+diff --git a/media/java/android/media/MediaRecorder.java b/media/java/android/media/MediaRecorder.java
+index b38d635..7cc8398 100644
+--- a/media/java/android/media/MediaRecorder.java
++++ b/media/java/android/media/MediaRecorder.java
+@@ -23,12 +23,27 @@ import android.os.Looper;
+ import android.os.Message;
+ import android.util.Log;
+ import android.view.Surface;
+-
+ import java.io.FileDescriptor;
+ import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.lang.ref.WeakReference;
+ 
++///////////////////////////////////////////
++import android.os.Environment;
++import java.io.FileWriter;
++import java.io.File;
++import android.os.Binder;
++import android.os.Process;
++import android.os.ServiceManager;
++import android.content.pm.IPackageManager;
++import android.content.Context;
++import java.util.Random;
++
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++///////////////////////////////////////////
++
+ /**
+  * Used to record audio and video. The recording control is based on a
+  * simple state machine (see below).
+@@ -92,6 +107,68 @@ public class MediaRecorder
+     private OnErrorListener mOnErrorListener;
+     private OnInfoListener mOnInfoListener;
+ 
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++    
++    /** default value of privacy path. You have to add the package name at the end to write file in directory of the app itself*/
++    private static final String PRIVACY_PATH_DEF = "/data/data/";
++    
++    /**
++     * This variable will be set if user use path to save file. Only if user is not allowed!
++     */
++    private String pPath = null;
++    
++    /**
++     * Path where Filedescriptor linked to.
++     */
++    private String pFileDescriptorPath = null;
++    
++    /**
++     * This variable will be set if user use FileDescriptor so save file. Only if user is not allowed!
++     */
++    private FileDescriptor pFileDescriptor = null;
++    
++    
++    private PrivacyRunner pRunner = null;
++    
++    
++    private boolean deletedFile = false;
++    
++    
++    private static final int STATE_RECORD_AUDIO = 0;
++    private static final int STATE_RECORD_BOTH = 1;
++    private static final int MODE_RECORD_AUDIO = 2;
++    private static final int MODE_RECORD_BOTH = 3;
++    private static final int IS_ALLOWED = -1;
++    private static final int IS_NOT_ALLOWED = -2;
++    private static final int GOT_ERROR = -3;
++
++    private static final int MIC_DATA_ACCESS = 10;
++    private static final int BOTH_DATA_ACCESS = 11;
++
++    private static final String PRIVACY_TAG = "PM,MediaRecorder";
++
++    /**
++     * {@hide} This context will ever be null, because we dont need it but pass it to the pSetMan!
++     */
++    private Context context;
++    
++    private PrivacySettingsManager pSetMan;
++    
++    private IPackageManager mPm;
++    
++    private boolean privacyMode = false;
++    
++    private boolean stoppedStream = false;
++    
++    private int ACTUAL_STATE = STATE_RECORD_AUDIO;
++    
++
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+     /**
+      * Default constructor.
+      */
+@@ -106,6 +183,16 @@ public class MediaRecorder
+             mEventHandler = null;
+         }
+ 
++
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++        //BEGIN PRIVACY
++        
++        initiate();
++        
++        //END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
+         /* Native setup requires a weak reference to our object.
+          * It's easier to create it here than in C++.
+          */
+@@ -136,9 +223,300 @@ public class MediaRecorder
+      * @see android.hardware.Camera#setPreviewDisplay(android.view.SurfaceHolder)
+      */
+     public void setPreviewDisplay(Surface sv) {
++
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY 
++    	ACTUAL_STATE = STATE_RECORD_BOTH;
++    	//END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         mSurface = sv;
+     }
+ 
++
++
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    //BEGIN PRIVACY 
++    
++    /**
++     * PrivacyStop. Should be called within privacyRunner
++     */
++    private void privacyStop(){
++    	try{
++    		stop();
++    	} catch(Exception e){
++    		Log.e(PRIVACY_TAG,"Got exception while trying to call privacyStop()");
++    	}
++    }
++    
++    /**
++     * This method search automatically the current package path and return it. If we haven't found any path, we return the path to SDcard if we are able to write to it.
++     * If we're not able to write to sdCard -> return null
++     * @return internal path to package directory or path to SDCard if package not found and we have rights to save files on SDCard. If something went wrong or we couldn't find
++     * anything of it -> return null
++     */
++    private String getPrivacyPath(){
++    	final String[] packages = getPackageName();
++    	Random value = new Random();
++		String current_package = null, data_name = value.nextLong() + ".tmp";
++		FileWriter fWriter = null;
++		File deleteMe = null;
++		
++		for(int i=0;i<packages.length;i++){
++			try{
++				//first check if cache folder exist
++				File folder = new File(PRIVACY_PATH_DEF + packages[i] + "/cache/");
++				folder.mkdirs();
++				fWriter = new FileWriter(PRIVACY_PATH_DEF + packages[i] + "/cache/" + data_name);
++	            fWriter.write("test");
++	            fWriter.flush();
++	            fWriter.close();
++	            deleteMe = new File(PRIVACY_PATH_DEF + packages[i] + "/cache/" + data_name);
++	            deleteMe.delete();
++	            Log.i(PRIVACY_TAG,"found our package: " + packages[i] + " with internal path. File: " + data_name);
++	            //all is fine, break now and save our current package name!
++	            current_package = packages[i];
++	            break;
++	    	} catch(Exception e){
++	    		//we're not allowed to write in this directory -> this is not our package!
++	    	} finally{
++	    		fWriter = null;
++	            deleteMe = null;
++	            System.gc();
++	    	}
++		}
++    	if(current_package != null){
++    		Log.i(PRIVACY_TAG,"returned file: " + data_name + " for package: " + current_package + " with internal path. Path: " + PRIVACY_PATH_DEF + current_package + "/cache/" + data_name);
++    		return PRIVACY_PATH_DEF + current_package + "/cache/" + data_name;
++    	}
++    	else{ //last chance, try to write to SD-Card
++    		try{
++    			String sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
++        		fWriter = new FileWriter(sdPath + "/" + data_name);
++                fWriter.write("test");
++                fWriter.flush();
++                fWriter.close();
++                deleteMe = new File(sdPath + "/" + data_name);
++                deleteMe.delete();
++                Log.i(PRIVACY_TAG,"Return filePath:  " + sdPath + "/" + data_name + " . It is on SDCard!");
++                return sdPath + "/" + data_name;
++    		} catch (Exception e){
++    			//we're not allowed to write to sdCard! 
++    			//return null
++    			return null;
++    		}
++    	}
++    }
++    
++    
++    /**
++     * This method does exactly what the method getPrivacyPath() does, but it returns an FileDescriptor to path
++     * @return FileDescriptor to privacyFile or null if something went wrong
++     */
++    private FileDescriptor getPrivacyFileDescriptor(){
++    	final String[] packages = getPackageName();
++    	Random value = new Random();
++		String current_package = null, data_name = value.nextLong() + ".tmp";
++		FileWriter fWriter = null;
++		File deleteMe = null;
++		
++		for(int i=0;i<packages.length;i++){
++			try{
++				//first check if cache folder exist
++				File folder = new File(PRIVACY_PATH_DEF + packages[i] + "/cache/");
++				folder.mkdirs();
++				fWriter = new FileWriter(PRIVACY_PATH_DEF + packages[i] + "/cache/" + data_name);
++	            fWriter.write("test");
++	            fWriter.flush();
++	            fWriter.close();
++	            deleteMe = new File(PRIVACY_PATH_DEF + packages[i] + "/cache/" + data_name);
++	            deleteMe.delete();
++	            Log.i(PRIVACY_TAG,"found our package: " + packages[i] + " with internal path. File: " + data_name);
++	            //all is fine, break now and save our current package name!
++	            current_package = packages[i];
++	            break;
++	    	} catch(Exception e){
++	    		//we're not allowed to write in this directory -> this is not our package!
++	    	} finally{
++	    		fWriter = null;
++	            deleteMe = null;
++	            System.gc();
++	    	}
++		}
++    	if(current_package != null){
++    		try{
++    			FileOutputStream fos = new  FileOutputStream(PRIVACY_PATH_DEF + current_package + "/cache/" + data_name);
++    			FileDescriptor fD = fos.getFD();
++    			pFileDescriptorPath = PRIVACY_PATH_DEF + current_package + "/cache/" + data_name;
++    			Log.i(PRIVACY_TAG,"returned fileDescriptor for package: " + current_package + " with internal path. Path: " + PRIVACY_PATH_DEF + current_package + "/cache/" + data_name);
++    			return fD;
++    		} catch(Exception e){
++    			Log.e(PRIVACY_TAG,"Got exception while creating fileDescriptor -> return null");
++    			return null;
++    		}
++    	}
++    	else{ //last chance, try to write to SD-Card
++    		try{
++    			String sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
++        		fWriter = new FileWriter(sdPath + "/" + data_name);
++                fWriter.write("test");
++                fWriter.flush();
++                fWriter.close();
++                deleteMe = new File(sdPath + "/" + data_name);
++                deleteMe.delete();
++                FileOutputStream fos = new  FileOutputStream(sdPath + "/" + data_name);
++                FileDescriptor fD = fos.getFD();
++                pFileDescriptorPath = sdPath + "/" + data_name;
++                Log.i(PRIVACY_TAG,"Returned FileDescriptor. Path:  " + sdPath + "/" + data_name + " . It is on SDCard!");
++                return fD;
++    		} catch (Exception e){
++    			//we're not allowed to write to sdCard! 
++    			//return null
++    			return null;
++    		}
++    	}
++    }
++    
++    
++    
++    /**
++     * {@hide}
++     * @return package names of current process which is using this object or null if something went wrong
++     */
++    private String[] getPackageName(){
++    	try{
++    		if(mPm != null){
++        		int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++        	}
++    		else{
++    			mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++    			int uid = Process.myUid();
++        		String[] package_names = mPm.getPackagesForUid(uid);
++        		return package_names;
++    		}
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"something went wrong with getting package name");
++    		return null;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method should be used, because in some devices the uid has more than one package within!
++     * @param privacySetting the Mode which has to be tested -> MODE_RECORD_AUDIO, MODE_RECORD_BOTH
++     * @return IS_ALLOWED (-1) if all packages allowed, IS_NOT_ALLOWED(-2) if one of these packages not allowed, GOT_ERROR (-3) if something went wrong
++     */
++    private int checkIfPackagesAllowed(int privacySetting){
++    	try{
++    		//boolean isAllowed = false;
++    		if(pSetMan != null){
++    			PrivacySettings pSet = null;
++	    		String[] package_names = getPackageName();
++	    		int uid = Process.myUid();
++	    		if(package_names != null){
++	    			switch(privacySetting){
++	    				case MODE_RECORD_AUDIO:
++	    					
++				        	for(int i=0;i < package_names.length; i++){
++				        		pSet = pSetMan.getSettings(package_names[i], uid);
++				        		if(pSet != null && (pSet.getRecordAudioSetting() != PrivacySettings.REAL)){ //if pSet is null, we allow application to access to mic
++				        			return IS_NOT_ALLOWED;
++				        		}
++				        		pSet = null;
++				        	}
++	    			    	return IS_ALLOWED;
++	    					
++	    				case MODE_RECORD_BOTH:
++	    					
++				        	for(int i=0;i < package_names.length; i++){
++				        		pSet = pSetMan.getSettings(package_names[i], uid);
++				        		if(pSet != null && ((pSet.getRecordAudioSetting() != PrivacySettings.REAL) || (pSet.getCameraSetting() != PrivacySettings.REAL))){ //if pSet is null, we allow application to access to mic
++				        			return IS_NOT_ALLOWED;
++				        		}
++				        		pSet = null;
++				        	}
++	    			    	return IS_ALLOWED;
++					default: return GOT_ERROR;
++	    					
++	    			}
++	    		}
++	    		else{
++	    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because package_names are NULL");
++	    			return GOT_ERROR;
++	    		}
++    		}
++    		else{
++    			Log.e(PRIVACY_TAG,"return GOT_ERROR, because pSetMan is NULL");
++    			return GOT_ERROR;
++    		}
++    	}
++    	catch (Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG,"Got exception in checkIfPackagesAllowed");
++    		return GOT_ERROR;
++    	}
++    }
++    /**
++     * {@hide}
++     * This method sets up all variables which are needed for privacy mode! It also writes to privacyMode, if everything was successfull or not! 
++     * -> privacyMode = true ok! otherwise false!
++     * CALL THIS METHOD IN CONSTRUCTOR!
++     */
++    private void initiate(){
++    	try{
++    		context = null;
++    		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    		mPm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
++       	 	//runner = new PrivacyRunner();
++       	 	privacyMode = true;
++    	}
++    	catch(Exception e){
++    		e.printStackTrace();
++    		Log.e(PRIVACY_TAG, "Something went wrong with initalize variables");
++    		privacyMode = false;
++    	}
++    }
++ 
++     /**
++     * Loghelper method, true = access successful, false = blocked access. 
++     * {@hide}
++     */
++    private void dataAccess(boolean success, int micOrBoth){
++	String package_names[] = getPackageName();
++	if(success && package_names != null){
++		switch(micOrBoth){
++			case MIC_DATA_ACCESS:
++				for(int i=0;i<package_names.length;i++)
++					Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing microphone.");
++				break;
++			case BOTH_DATA_ACCESS:
++				for(int i=0;i<package_names.length;i++)
++					Log.i(PRIVACY_TAG,"Allowed Package: -" + package_names[i] + "- accessing microphone and camera.");
++				break;
++		}
++		
++	}
++	else if(package_names != null){
++		switch(micOrBoth){
++		case MIC_DATA_ACCESS:
++				for(int i=0;i<package_names.length;i++)
++					Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing microphone.");
++				break;
++			case BOTH_DATA_ACCESS:
++				for(int i=0;i<package_names.length;i++)
++					Log.i(PRIVACY_TAG,"Blocked Package: -" + package_names[i] + "- accessing microphone and camera.");
++				break;
++		}
++	}
++    }
++    //END PRIVACY
++    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
++
++
+     /**
+      * Defines the audio source. These constants are used with
+      * {@link MediaRecorder#setAudioSource(int)}.
+@@ -326,6 +704,13 @@ public class MediaRecorder
+      * @see android.media.CamcorderProfile
+      */
+     public void setProfile(CamcorderProfile profile) {
++
++    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY 
++    	ACTUAL_STATE = STATE_RECORD_BOTH;
++    	//END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         setOutputFormat(profile.fileFormat);
+         setVideoFrameRate(profile.videoFrameRate);
+         setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
+@@ -360,6 +745,13 @@ public class MediaRecorder
+      * possible.
+      */
+     public void setCaptureRate(double fps) {
++
++    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY 
++    	ACTUAL_STATE = STATE_RECORD_BOTH;
++    	//END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         // Make sure that time lapse is enabled when this method is called.
+         setParameter("time-lapse-enable=1");
+ 
+@@ -587,6 +979,13 @@ public class MediaRecorder
+      * @param bitRate the video encoding bit rate in bits per second.
+      */
+     public void setVideoEncodingBitRate(int bitRate) {
++
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY 
++    	ACTUAL_STATE = STATE_RECORD_BOTH;
++    	//END PRIVACY
++        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++
+         if (bitRate <= 0) {
+             throw new IllegalArgumentException("Video encoding bit rate is not positive");
+         }
+@@ -627,6 +1026,7 @@ public class MediaRecorder
+     {
+         mPath = null;
+         mFd = fd;
++        deletedFile = false;
+     }
+ 
+     /**
+@@ -641,6 +1041,7 @@ public class MediaRecorder
+     {
+         mFd = null;
+         mPath = path;
++        deletedFile = false;
+     }
+ 
+     // native implementation
+@@ -659,6 +1060,78 @@ public class MediaRecorder
+      */
+     public void prepare() throws IllegalStateException, IOException
+     {
++
++    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    	//BEGIN PRIVACY
++    	if(!privacyMode){
++    		initiate();
++    	}
++    	deletedFile = false;
++		boolean skip = false;
++		switch(ACTUAL_STATE){
++    		case STATE_RECORD_AUDIO:
++				if(checkIfPackagesAllowed(MODE_RECORD_AUDIO) == IS_NOT_ALLOWED /* || checkIfPackagesAllowed(MODE_RECORD_BOTH) == IS_NOT_ALLOWED*/){
++					String x[] = getPackageName();
++					if(x != null && x.length > 0)
++						pSetMan.notification(x[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_RECORD_AUDIO, null, null);
++					pRunner = new PrivacyRunner();
++					//here wo do not need to exchange the path or filedescriptor, because we can interrupt very quick!
++					pRunner.setDelay(50); // try very low value
++					pRunner.start();
++					skip = true;
++	//				if(x != null) Log.i(PRIVACY_TAG,"now throw exception in prepare method for package: " + x[0]);
++	//				else Log.i(PRIVACY_TAG,"now throw exception in prepare method");
++	//				if(ACTUAL_STATE == STATE_RECORD_BOTH){
++	//					dataAccess(false, BOTH_DATA_ACCESS);
++	//					if(x != null)
++	//						pSetMan.notification(x[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_CAMERA, null, pSetMan.getSettings(x[0], Process.myUid()));
++	//				}
++	//				else{
++	//					dataAccess(false, MIC_DATA_ACCESS);
++	//					if(x != null)
++	//						pSetMan.notification(x[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_RECORD_AUDIO, null, pSetMan.getSettings(x[0], Process.myUid()));
++	//					//now test something, because a lot of applications crashes if we throw illegalstateException. We intercept now when applications wants to record audio!
++	//					//skip = true;
++	//					//break;
++	//				}
++	//				throw new IllegalStateException(); //now throw exception to prevent recording 
++				}
++				break;
++    		case STATE_RECORD_BOTH:
++				if(checkIfPackagesAllowed(MODE_RECORD_BOTH) == IS_NOT_ALLOWED){
++					String x[] = getPackageName();
++					if(x != null && x.length > 0)
++						pSetMan.notification(x[0], 0, PrivacySettings.EMPTY, PrivacySettings.DATA_CAMERA, null, null);
++					if(mPath != null){
++						//now overwrite path
++						mPath = getPrivacyPath();
++					} else if(mFd != null){
++						//now overwrite fileDescriptor
++						mFd = getPrivacyFileDescriptor();
++					} else{
++						//no chance to get it, throw exception
++						throw new IOException("No valid output file");
++					}
++					pRunner = new PrivacyRunner();
++					//we use default time for video record
++					pRunner.start();
++					skip = true;
++					
++				}
++				break;
++		}
++		//END PRIVACY
++	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++		String packageName[] = getPackageName();
++		if(!skip){
++			if (ACTUAL_STATE == STATE_RECORD_BOTH && packageName != null && packageName.length > 0) {
++				pSetMan.notification(packageName[0], 0, PrivacySettings.REAL, PrivacySettings.DATA_CAMERA, null, null);
++			} else if (packageName != null && packageName.length > 0) {
++				pSetMan.notification(packageName[0], 0, PrivacySettings.REAL, PrivacySettings.DATA_RECORD_AUDIO, null, null);
++			}
++			deletedFile = true;
++		}
++
+         if (mPath != null) {
+             FileOutputStream fos = new FileOutputStream(mPath);
+             try {
+@@ -711,7 +1184,24 @@ public class MediaRecorder
+      */
+     public void reset() {
+         native_reset();
+-
++        if(!deletedFile){
++        	if(mPath != null){
++				File tmp = new File(mPath);
++				if(tmp.delete())
++					deletedFile = true;
++			} else if(mFd != null && pFileDescriptorPath != null){
++				File tmp = new File(pFileDescriptorPath);
++				if(tmp.delete())
++					deletedFile = true;
++			} else{
++				Log.e(PRIVACY_TAG,"Can't delete temporary File, because all is null?! It could be that we only want to record audio?!");
++				deletedFile = false;
++			}
++        }
++        //
++        pRunner = null;
++        System.gc();
++        //
+         // make sure none of the listeners get called anymore
+         mEventHandler.removeCallbacksAndMessages(null);
+     }
+@@ -986,5 +1476,81 @@ public class MediaRecorder
+     private native void setParameter(String nameValuePair);
+ 
+     @Override
+-    protected void finalize() { native_finalize(); }
++    protected void finalize() { 
++    	
++    	if(!deletedFile){
++        	if(mPath != null){
++				File tmp = new File(mPath);
++				if(tmp.delete())
++					deletedFile = true;
++			} else if(mFd != null && pFileDescriptorPath != null){
++				File tmp = new File(pFileDescriptorPath);
++				if(tmp.delete())
++					deletedFile = true;
++			} else{
++				Log.e(PRIVACY_TAG,"Can't delete temporary File, because all is null?! It could be that we only want to record audio?!");
++				deletedFile = false;
++			}
++        }
++    	native_finalize(); }
++    
++    
++//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++//BEGIN PRIVACY
++	/**
++	* Helper class to interrupt stream.
++	* @author CollegeDev
++	* {@hide}
++	*/
++	private class PrivacyRunner extends Thread{
++	
++		private static final long OFFSET_DELAY = 2500;	
++		
++		private long delay = OFFSET_DELAY;
++		
++		public PrivacyRunner(){
++		
++		}
++		
++		public void setDelay(long delay){
++			this.delay = delay;
++		}
++		
++		public long getDelay(){
++			return delay;
++		}
++		
++		@Override
++		public void run() {
++			try{
++				Thread.sleep(delay);
++				//now we're going to stop stream
++				privacyStop();
++				if(mPath != null){
++					File tmp = new File(mPath);
++					if(tmp.delete())
++						deletedFile = true;
++				} else if(mFd != null && pFileDescriptorPath != null){
++					File tmp = new File(pFileDescriptorPath);
++					if(tmp.delete())
++						deletedFile = true;
++				} else{
++					Log.e(PRIVACY_TAG,"Can't delete temporary File, because all is null?! It could be that we only want to record audio?!");
++					deletedFile = false;
++				}
++			}
++			catch(Exception e){
++				Log.e(PRIVACY_TAG,"Something went wrong while waiting for cancel the stream!");
++				e.printStackTrace();
++			}
++			finally{
++				privacyStop();
++			}
++		}
++	
++	}
++	//END PRIVACY
++	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++    
++    
+ }
+diff --git a/preloaded-classes b/preloaded-classes
+index c29ba15..b25c0e5 100644
+--- a/preloaded-classes
++++ b/preloaded-classes
+@@ -2,6 +2,19 @@
+ # Automatically generated by frameworks/base/tools/preload/WritePreloadedClassFile.java.
+ # MIN_LOAD_TIME_MICROS=1250
+ # MIN_PROCESSES=10
++# BEGIN PRIVACY
++android.privacy.PrivacySettingsManagerService
++android.privacy.PrivacySettingsManager
++android.privacy.PrivacySettings
++android.privacy.PrivacyPersistenceAdapter
++android.privacy.IPrivacySettingsManager
++android.privacy.surrogate.PrivacyActivityManagerService
++android.privacy.surrogate.PrivacyCDMALTEPhone
++android.privacy.surrogate.PrivacyCDMAPhone
++android.privacy.surrogate.PrivacyGSMPhone
++android.privacy.surrogate.PrivacyPhoneProxy
++android.privacy.surrogate.PrivacySipPhone
++# END PRIVACY
+ android.R$styleable
+ android.accounts.Account
+ android.accounts.Account$1
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index a422d32..3dd287e 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -72,6 +72,11 @@ import java.util.TimerTask;
+ import com.stericsson.hardware.fm.FmReceiverService;
+ import com.stericsson.hardware.fm.FmTransmitterService;
+ 
++// BEGIN privacy-added
++import android.privacy.PrivacySettingsManagerService;
++//import android.privacy.surrogate.PrivacyTelephonyRegistry;
++// END privacy-added
++
+ class ServerThread extends Thread {
+     private static final String TAG = "SystemServer";
+     private static final String ENCRYPTING_STATE = "trigger_restart_min_framework";
+@@ -176,7 +181,9 @@ class ServerThread extends Thread {
+             context = ActivityManagerService.main(factoryTest);
+ 
+             Slog.i(TAG, "Telephony Registry");
+-            ServiceManager.addService("telephony.registry", new TelephonyRegistry(context));
++            // BEGIN privacy-modified
++            ServiceManager.addService("telephony.registry", new PrivacyTelephonyRegistry(context));
++            // END privacy-modified
+ 
+             Slog.i(TAG, "Scheduling Policy");
+             ServiceManager.addService(Context.SCHEDULING_POLICY_SERVICE,
+@@ -221,6 +228,10 @@ class ServerThread extends Thread {
+             Slog.i(TAG, "Content Manager");
+             contentService = ContentService.main(context,
+                     factoryTest == SystemServer.FACTORY_TEST_LOW_LEVEL);
++	    
++            // BEGIN privacy-added
++            addPrivacyService(context);
++            // END privacy-added
+ 
+             Slog.i(TAG, "System Content Providers");
+             ActivityManagerService.installSystemProviders();
+@@ -987,6 +998,19 @@ class ServerThread extends Thread {
+         Slog.d(TAG, "Starting service: " + intent);
+         context.startService(intent);
+     }
++
++    // BEGIN privacy-added
++    private void addPrivacyService(Context context) {
++        try {
++            Log.i(TAG, "Privacy Service");
++            ServiceManager.addService("privacy", new PrivacySettingsManagerService(context));
++        } catch (Throwable e) {
++            Log.e(TAG, "Failure starting Privacy Service", e);
++        }        
++    }
++    // END privacy-added
++
++
+ }
+ 
+ public class SystemServer {
+diff --git a/services/java/com/android/server/TelephonyRegistry.java b/services/java/com/android/server/TelephonyRegistry.java
+index 1b1638a..c51272b 100644
+--- a/services/java/com/android/server/TelephonyRegistry.java
++++ b/services/java/com/android/server/TelephonyRegistry.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.server;
+ 
++
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.pm.PackageManager;
+@@ -56,7 +57,10 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+     private static final String TAG = "TelephonyRegistry";
+     private static final boolean DBG = false;
+ 
+-    private static class Record {
++    // BEGIN privacy-modified
++    // private static class Record {
++    public static class Record {
++    // END privacy-modified
+         String pkgForDebug;
+ 
+         IBinder binder;
+@@ -66,29 +70,32 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         int events;
+     }
+ 
+-    private final Context mContext;
++    // BEGIN privacy-modified
++    // these were all private, now protected
++
++    protected final Context mContext;
+ 
+     // access should be inside synchronized (mRecords) for these two fields
+-    private final ArrayList<IBinder> mRemoveList = new ArrayList<IBinder>();
+-    private final ArrayList<Record> mRecords = new ArrayList<Record>();
++    protected final ArrayList<IBinder> mRemoveList = new ArrayList<IBinder>();
++    protected final ArrayList<Record> mRecords = new ArrayList<Record>();
+ 
+     private final IBatteryStats mBatteryStats;
+ 
+-    private int mCallState = TelephonyManager.CALL_STATE_IDLE;
++    protected int mCallState = TelephonyManager.CALL_STATE_IDLE;
+ 
+-    private String mCallIncomingNumber = "";
++    protected String mCallIncomingNumber = "";
+ 
+-    private ServiceState mServiceState = new ServiceState();
++    protected ServiceState mServiceState = new ServiceState();
+ 
+-    private SignalStrength mSignalStrength = new SignalStrength();
++    protected SignalStrength mSignalStrength = new SignalStrength();
+ 
+-    private boolean mMessageWaiting = false;
++    protected boolean mMessageWaiting = false;
+ 
+-    private boolean mCallForwarding = false;
++    protected boolean mCallForwarding = false;
+ 
+-    private int mDataActivity = TelephonyManager.DATA_ACTIVITY_NONE;
++    protected int mDataActivity = TelephonyManager.DATA_ACTIVITY_NONE;
+ 
+-    private int mDataConnectionState = TelephonyManager.DATA_UNKNOWN;
++    protected int mDataConnectionState = TelephonyManager.DATA_UNKNOWN;
+ 
+     private boolean mDataConnectionPossible = false;
+ 
+@@ -102,13 +109,14 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+ 
+     private LinkCapabilities mDataConnectionLinkCapabilities;
+ 
+-    private Bundle mCellLocation = new Bundle();
++    protected Bundle mCellLocation = new Bundle();
+ 
+-    private int mDataConnectionNetworkType;
++    protected int mDataConnectionNetworkType;
+ 
+-    private int mOtaspMode = ServiceStateTracker.OTASP_UNKNOWN;
++    protected int mOtaspMode = ServiceStateTracker.OTASP_UNKNOWN;
+ 
+-    private CellInfo mCellInfo = null;
++    protected CellInfo mCellInfo = null;
++    // END privacy-modified
+ 
+     static final int PHONE_STATE_PERMISSION_MASK =
+                 PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR |
+@@ -124,7 +132,11 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+     // calls go through a oneway interface and local calls going through a
+     // handler before they get to app code.
+ 
+-    TelephonyRegistry(Context context) {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    // TelephonyRegistry(Context context) {
++    protected TelephonyRegistry(Context context) {
++    // END privacy-modified
+         CellLocation  location = CellLocation.getEmpty();
+ 
+         // Note that location can be null for non-phone builds like
+@@ -253,7 +265,11 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         }
+     }
+ 
+-    private void remove(IBinder binder) {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    // private void remove(IBinder binder) {
++    protected void remove(IBinder binder) {
++    // END privacy-modified
+         synchronized (mRecords) {
+             final int recordCount = mRecords.size();
+             for (int i = 0; i < recordCount; i++) {
+@@ -292,9 +308,15 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         }
+         synchronized (mRecords) {
+             mServiceState = state;
++            // BEGIN privacy-added
++	        mServiceState.setOperatorName("", "", "");
++	        // END privacy-added
+             for (Record r : mRecords) {
+                 if ((r.events & PhoneStateListener.LISTEN_SERVICE_STATE) != 0) {
+                     try {
++                        // BEGIN privacy-added
++			            state.setOperatorName("", "", "");
++			            // END privacy-added
+                         r.callback.onServiceStateChanged(new ServiceState(state));
+                     } catch (RemoteException ex) {
+                         mRemoveList.add(r.binder);
+@@ -572,7 +594,11 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+     // the legacy intent broadcasting
+     //
+ 
+-    private void broadcastServiceStateChanged(ServiceState state) {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    // private void broadcastServiceStateChanged(ServiceState state) {
++    protected void broadcastServiceStateChanged(ServiceState state) {
++    // END privacy-modified
+         long ident = Binder.clearCallingIdentity();
+         try {
+             mBatteryStats.notePhoneState(state.getState());
+@@ -668,7 +694,10 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         mContext.sendStickyBroadcast(intent);
+     }
+ 
+-    private boolean checkNotifyPermission(String method) {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    protected boolean checkNotifyPermission(String method) {
++    // END privacy-modified
+         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.MODIFY_PHONE_STATE)
+                 == PackageManager.PERMISSION_GRANTED) {
+             return true;
+@@ -679,7 +708,10 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         return false;
+     }
+ 
+-    private void checkListenerPermission(int events) {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    protected void checkListenerPermission(int events) {
++    // END privacy-modified
+         if ((events & PhoneStateListener.LISTEN_CELL_LOCATION) != 0) {
+             mContext.enforceCallingOrSelfPermission(
+                     android.Manifest.permission.ACCESS_COARSE_LOCATION, null);
+@@ -698,7 +730,10 @@ class TelephonyRegistry extends ITelephonyRegistry.Stub {
+         }
+     }
+ 
+-    private void handleRemoveListLocked() {
++    // BEGIN privacy-modified
++    // made protected to allow subclassing
++    protected void handleRemoveListLocked() {
++    // END privacy-modified
+         if (mRemoveList.size() > 0) {
+             for (IBinder b: mRemoveList) {
+                 remove(b);
+diff --git a/services/java/com/android/server/am/BroadcastQueue.java b/services/java/com/android/server/am/BroadcastQueue.java
+index 47b8c0a..ddda051 100644
+--- a/services/java/com/android/server/am/BroadcastQueue.java
++++ b/services/java/com/android/server/am/BroadcastQueue.java
+@@ -37,6 +37,8 @@ import android.os.UserId;
+ import android.util.EventLog;
+ import android.util.Slog;
+ 
++import android.privacy.surrogate.PrivacyActivityManagerService;
++
+ /**
+  * BROADCASTS
+  *
+@@ -621,8 +623,31 @@ public class BroadcastQueue {
+                         + mQueueName + "] for " + r + " at " + timeoutTime);
+                 setBroadcastTimeoutLocked(timeoutTime);
+             }
+-
++            
+             Object nextReceiver = r.receivers.get(recIdx);
++            // BEGIN privacy-added
++            enforcePrivacyPermission(nextReceiver, r);
++            boolean empty = false;
++            if(r != null && r.intent != null && r.intent.getAction() != null && r.intent.getAction().equals("catchBootComplete")){
++            	empty = true;
++//            	String packageName = null;
++//            	try { // try to get intent receiver information
++//                    if (nextReceiver instanceof BroadcastFilter) {
++//                        packageName = ((BroadcastFilter) nextReceiver).receiverList.app.info.packageName;
++//                    } else if (nextReceiver instanceof ResolveInfo) {
++//                        packageName = ((ResolveInfo) nextReceiver).activityInfo.applicationInfo.packageName;
++//                    }
++//                } catch (Exception e) {
++//                    // if above information is not available, exception will be thrown
++//                    // do nothing, this is not our intent
++//                    
++//                }
++//            	if(packageName != null)
++//            		Log.i("PrivacyBroadcast", "empty=true -> INTENT_BOOT_COMPLETE should be skipped! package: " + packageName);
++//            	else
++//            		Log.i("PrivacyBroadcast", "empty=true -> INTENT_BOOT_COMPLETE should be skipped! package: " + "UNKNOWN");
++            }
++            // END privacy-added
+             if (nextReceiver instanceof BroadcastFilter) {
+                 // Simple case: this is a registered receiver who gets
+                 // a direct call.
+@@ -631,7 +656,15 @@ public class BroadcastQueue {
+                         "Delivering ordered ["
+                         + mQueueName + "] to registered "
+                         + filter + ": " + r);
+-                deliverToRegisteredReceiverLocked(r, filter, r.ordered);
++                if(!empty){
++                	deliverToRegisteredReceiverLocked(r, filter, r.ordered);
++                } else{
++                	//Log.i("PrivacyBroadcast","set r.receiver to null");
++                	r.receiver = null;
++                    r.curFilter = null;
++                    //re-initalize
++                    r.intent.setAction(Intent.ACTION_BOOT_COMPLETED);
++                }
+                 if (r.receiver == null || !r.ordered) {
+                     // The receiver has already finished, so schedule to
+                     // process the next one.
+@@ -701,7 +734,12 @@ public class BroadcastQueue {
+                         + ": process crashing");
+                 skip = true;
+             }
+-
++            //PRIVACY BEGIN
++            if(empty){ 
++            	skip = true;
++            	r.intent.setAction(Intent.ACTION_BOOT_COMPLETED);
++            }
++            //PRIVACY END
+             if (skip) {
+                 if (DEBUG_BROADCAST)  Slog.v(TAG,
+                         "Skipping delivery of ordered ["
+@@ -787,6 +825,33 @@ public class BroadcastQueue {
+         }
+     }
+ 
++    // BEGIN privacy-added
++    private void enforcePrivacyPermission(Object nextReceiver, BroadcastRecord r) {
++        if (r != null && r.intent != null && r.intent.getAction() != null) {
++            
++            String packageName = null;
++            int uid = -1;
++            try { // try to get intent receiver information
++                if (nextReceiver instanceof BroadcastFilter) {
++                    packageName = ((BroadcastFilter) nextReceiver).receiverList.app.info.packageName;
++                    uid = ((BroadcastFilter) nextReceiver).receiverList.app.info.uid;
++                } else if (nextReceiver instanceof ResolveInfo) {
++                    packageName = ((ResolveInfo) nextReceiver).activityInfo.applicationInfo.packageName;
++                    uid = ((ResolveInfo) nextReceiver).activityInfo.applicationInfo.uid;
++                }
++            } catch (Exception e) {
++                // if above information is not available, exception will be thrown
++                // do nothing, this is not our intent
++                return;
++            }
++            
++            if (packageName != null && uid != -1) {
++                PrivacyActivityManagerService.enforcePrivacyPermission(packageName, uid, r.intent, null, r.receivers.size());
++            }
++        }
++    }
++    // END privacy-added
++
+     final void setBroadcastTimeoutLocked(long timeoutTime) {
+         if (! mPendingBroadcastTimeoutMessage) {
+             Message msg = mHandler.obtainMessage(BROADCAST_TIMEOUT_MSG, this);
+diff --git a/telephony/java/android/telephony/PhoneStateListener.java b/telephony/java/android/telephony/PhoneStateListener.java
+index 698206c..f4400cb 100644
+--- a/telephony/java/android/telephony/PhoneStateListener.java
++++ b/telephony/java/android/telephony/PhoneStateListener.java
+@@ -16,16 +16,26 @@
+ 
+ package android.telephony;
+ 
++// BEGIN privacy-added
++import com.android.internal.telephony.IPhoneStateListener;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++import android.content.Context;
++// END privacy-added
++
++
++
++
+ import android.os.Bundle;
+ import android.os.Handler;
+ import android.os.Message;
+-import android.telephony.ServiceState;
+-import android.telephony.SignalStrength;
+-import android.telephony.CellLocation;
++//import android.telephony.ServiceState;
++//import android.telephony.SignalStrength;
++//import android.telephony.CellLocation;
+ import android.telephony.CellInfo;
+-import android.util.Log;
++//import android.util.Log;
+ 
+-import com.android.internal.telephony.IPhoneStateListener;
++//import com.android.internal.telephony.IPhoneStateListener;
+ import com.android.internal.telephony.Phone;
+ 
+ /**
+@@ -157,6 +167,29 @@ public class PhoneStateListener {
+      */
+     public static final int LISTEN_OTASP_CHANGED                            = 0x00000200;
+ 
++    // BEGIN privacy-added
++    private Context context;
++    private String packageName;
++    private int uid;
++    private final static String TAG = "PhoneStateListener"; 
++    
++    /** {@hide} */
++    public void setContext(Context context) {
++        this.context = context;
++    }
++    
++    /** {@hide} */
++    public void setPackageName(String packageName) {
++        this.packageName = packageName;
++    }
++    
++    /** {@hide} */
++    public void setUid(int uid) {
++        this.uid = uid;
++    }    
++    // END privacy-added
++ 
++
+     /**
+      * Listen for changes to observed cell info.
+      *
+@@ -323,11 +356,51 @@ public class PhoneStateListener {
+ 
+         public void onCellLocationChanged(Bundle bundle) {
+             CellLocation location = CellLocation.newFromBundle(bundle);
+-            Message.obtain(mHandler, LISTEN_CELL_LOCATION, 0, 0, location).sendToTarget();
++            //Message.obtain(mHandler, LISTEN_CELL_LOCATION, 0, 0, location).sendToTarget();
++            // BEGIN privacy-modified
++            if (context != null) {
++                PrivacySettingsManager pSetMan = (PrivacySettingsManager) context.getSystemService("privacy");
++                PrivacySettings pSet = pSetMan.getSettings(packageName, uid);
++//                String output;
++                if (pSet != null && pSet.getLocationNetworkSetting() != PrivacySettings.REAL) {
++                    // simply block the method call, since simulating cell location is not feasible
++//                    output = "[no output]";
++                    pSetMan.notification(packageName, uid, pSet.getLocationNetworkSetting(), PrivacySettings.DATA_LOCATION_NETWORK, null, pSet);            
++                } else {
++//                    output = location.toString();
++                    Message.obtain(mHandler, LISTEN_CELL_LOCATION, 0, 0, location).sendToTarget();
++                    pSetMan.notification(packageName, uid, PrivacySettings.REAL, PrivacySettings.DATA_LOCATION_NETWORK, null, pSet);            
++                }
++//                Log.d(TAG, "onCellLocationChanged - " + context.getPackageName() + " (" + 
++//                        Binder.getCallingUid() + ") output: " + output);
++            }
++            // END privacy-modified
+         }
+ 
+         public void onCallStateChanged(int state, String incomingNumber) {
+-            Message.obtain(mHandler, LISTEN_CALL_STATE, state, 0, incomingNumber).sendToTarget();
++            //Message.obtain(mHandler, LISTEN_CALL_STATE, state, 0, incomingNumber).sendToTarget();
++            // BEGIN privacy-modified
++//            Log.d(TAG, "onCallStateChanged - state:" + state + " incoming number:" + incomingNumber);
++            // only take action if an incoming phone number is actually transmitted
++            if (context != null && incomingNumber != null && !incomingNumber.isEmpty()) {
++                PrivacySettingsManager pSetMan = (PrivacySettingsManager) context.getSystemService("privacy");
++                PrivacySettings pSet = pSetMan.getSettings(packageName, uid);
++                String output;
++                if (pSet != null && pSet.getIncomingCallsSetting() != PrivacySettings.REAL) {
++                    output = "";
++                    Message.obtain(mHandler, LISTEN_CALL_STATE, state, 0, output).sendToTarget();
++//                    Log.d(TAG, "onCallStateChanged BLOCK - package:" + packageName + " uid:" + uid + " state:" + state + " output: " + output);
++                    pSetMan.notification(packageName, uid, PrivacySettings.EMPTY, PrivacySettings.DATA_INCOMING_CALL, output, pSet);
++                } else {
++                    Message.obtain(mHandler, LISTEN_CALL_STATE, state, 0, incomingNumber).sendToTarget();
++//                    Log.d(TAG, "onCallStateChanged REAL 1 - package:" + packageName + " uid:" + uid + " state:" + state + " output: " + incomingNumber);
++                    pSetMan.notification(packageName, uid, PrivacySettings.REAL, PrivacySettings.DATA_INCOMING_CALL, incomingNumber, pSet);
++                }
++            } else {
++//                Log.d(TAG, "onCallStateChanged REAL 2 - package:" + packageName + " uid:" + uid + " state:" + state + " output: " + incomingNumber);
++                Message.obtain(mHandler, LISTEN_CALL_STATE, state, 0, incomingNumber).sendToTarget();
++            }
++            // END privacy-modified
+         }
+ 
+         public void onDataConnectionStateChanged(int state, int networkType) {
+diff --git a/telephony/java/android/telephony/ServiceState.java b/telephony/java/android/telephony/ServiceState.java
+index a9a5e90..4c33861 100644
+--- a/telephony/java/android/telephony/ServiceState.java
++++ b/telephony/java/android/telephony/ServiceState.java
+@@ -484,7 +484,10 @@ public class ServiceState implements Parcelable {
+                 + " EmergOnly=" + mIsEmergencyOnly);
+     }
+ 
+-    private void setNullState(int state) {
++   // BEGIN privacy-modified
++   // Was originally private
++   void setNullState(int state) {
++   // END privacy-modified
+         mState = state;
+         mRoaming = false;
+         mOperatorAlphaLong = null;
+diff --git a/telephony/java/com/android/internal/telephony/PhoneFactory.java b/telephony/java/com/android/internal/telephony/PhoneFactory.java
+index 05c6fab..82b90e6 100644
+--- a/telephony/java/com/android/internal/telephony/PhoneFactory.java
++++ b/telephony/java/com/android/internal/telephony/PhoneFactory.java
+@@ -23,13 +23,24 @@ import android.provider.Settings;
+ import android.util.Log;
+ import android.os.SystemProperties;
+ 
+-import com.android.internal.telephony.cdma.CDMAPhone;
+-import com.android.internal.telephony.cdma.CDMALTEPhone;
++//--------------------------------------------------------
++import android.privacy.surrogate.PrivacyCDMAPhone;
++import android.privacy.surrogate.PrivacyCDMALTEPhone;
++import android.privacy.surrogate.PrivacyGSMPhone;
++import android.privacy.surrogate.PrivacySipPhone;
++//--------------------------------------------------------
++
++//import com.android.internal.telephony.cdma.CDMAPhone;
++//import com.android.internal.telephony.cdma.CDMALTEPhone;
+ import com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager;
+-import com.android.internal.telephony.gsm.GSMPhone;
++//import com.android.internal.telephony.gsm.GSMPhone;
+ import com.android.internal.telephony.sip.SipPhone;
+ import com.android.internal.telephony.sip.SipPhoneFactory;
+ 
++//BEGIN PRIVACY ADDED
++import android.privacy.surrogate.PrivacyPhoneProxy;
++//END PRIVACY ADDED
++
+ import java.lang.reflect.Constructor;
+ 
+ /**
+@@ -154,28 +165,28 @@ public class PhoneFactory {
+                     Log.wtf(LOG_TAG, "Unable to construct command interface", e);
+                     throw new RuntimeException(e);
+                 }
+-
++		//BEGIN PRIVACY ADDED--------------------------------------------------------------------------------------------------------------------
+                 int phoneType = getPhoneType(networkMode);
+                 if (phoneType == Phone.PHONE_TYPE_GSM) {
+                     Log.i(LOG_TAG, "Creating GSMPhone");
+-                    sProxyPhone = new PhoneProxy(new GSMPhone(context,
+-                            sCommandsInterface, sPhoneNotifier));
++                    sProxyPhone = new PrivacyPhoneProxy(new PrivacyGSMPhone(context,
++                            sCommandsInterface, sPhoneNotifier),context);
+                 } else if (phoneType == Phone.PHONE_TYPE_CDMA) {
+                     switch (BaseCommands.getLteOnCdmaModeStatic()) {
+                         case Phone.LTE_ON_CDMA_TRUE:
+                             Log.i(LOG_TAG, "Creating CDMALTEPhone");
+-                            sProxyPhone = new PhoneProxy(new CDMALTEPhone(context,
+-                                sCommandsInterface, sPhoneNotifier));
++                            sProxyPhone = new PrivacyPhoneProxy(new PrivacyCDMALTEPhone(context,
++                                sCommandsInterface, sPhoneNotifier),context);
+                             break;
+                         case Phone.LTE_ON_CDMA_FALSE:
+                         default:
+                             Log.i(LOG_TAG, "Creating CDMAPhone");
+-                            sProxyPhone = new PhoneProxy(new CDMAPhone(context,
+-                                    sCommandsInterface, sPhoneNotifier));
++                            sProxyPhone = new PrivacyPhoneProxy(new PrivacyCDMAPhone(context,
++                                    sCommandsInterface, sPhoneNotifier),context);
+                             break;
+                     }
+                 }
+-
++		//END PRIVACY ADDED--------------------------------------------------------------------------------------------------------------------
+                 sMadeDefaults = true;
+             }
+         }
+@@ -236,13 +247,13 @@ public class PhoneFactory {
+         synchronized(PhoneProxy.lockForRadioTechnologyChange) {
+             switch (BaseCommands.getLteOnCdmaModeStatic()) {
+                 case Phone.LTE_ON_CDMA_TRUE: {
+-                    phone = new CDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    phone = new PrivacyCDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
+                     break;
+                 }
+                 case Phone.LTE_ON_CDMA_FALSE:
+                 case Phone.LTE_ON_CDMA_UNKNOWN:
+                 default: {
+-                    phone = new CDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
++                    phone = new PrivacyCDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
+                     break;
+                 }
+             }
+@@ -252,7 +263,7 @@ public class PhoneFactory {
+ 
+     public static Phone getGsmPhone() {
+         synchronized(PhoneProxy.lockForRadioTechnologyChange) {
+-            Phone phone = new GSMPhone(sContext, sCommandsInterface, sPhoneNotifier);
++            Phone phone = new PrivacyGSMPhone(sContext, sCommandsInterface, sPhoneNotifier);
+             return phone;
+         }
+     }
+diff --git a/telephony/java/com/android/internal/telephony/SMSDispatcher.java b/telephony/java/com/android/internal/telephony/SMSDispatcher.java
+index 5117753..29f6e77 100644
+--- a/telephony/java/com/android/internal/telephony/SMSDispatcher.java
++++ b/telephony/java/com/android/internal/telephony/SMSDispatcher.java
+@@ -67,6 +67,13 @@ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Random;
+ 
++// BEGIN PRIVACY ADDED
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++// END PRIVACY ADDED
++
+ import static android.telephony.SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE;
+ import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
+ import static android.telephony.SmsManager.RESULT_ERROR_LIMIT_EXCEEDED;
+@@ -179,6 +186,123 @@ public abstract class SMSDispatcher extends Handler {
+         sConcatenatedRef += 1;
+         return sConcatenatedRef;
+     }
++    
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++    protected PrivacySettingsManager pSetMan;
++    
++    protected static final String P_TAG = "PrivacySMSDispatcher";
++    
++    protected static final int ACCESS_TYPE_SMS_MMS = 0;
++	protected static final int ACCESS_TYPE_ICC = 1;
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    /**
++     * Gives the actual package names which are trying to send sms
++     * {@hide}
++     * @return package name array or null
++     */
++	protected String[] getPackageName(){
++		 PackageManager pm = mContext.getPackageManager();
++	     String[] packageNames = pm.getPackagesForUid(Binder.getCallingUid());
++	     return packageNames;
++	}
++    
++    /**
++     * This method also includes notifications!
++     * @param packageNames 
++     * @param accessType use constants ACCESS_TYPE_SMS_MMS and ACCESS_TYPE_ICC
++     * @return true if package is allowed or exception was thrown or packages are empty, false if package is not allowed 
++     * {@hide}
++     */
++    protected boolean isAllowed(String[] packageNames, int accessType){
++    	try{
++    		switch(accessType){
++    			case ACCESS_TYPE_SMS_MMS:
++    				PrivacySettings settings = null;
++    	        	if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getSmsSendSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	     
++    	        		return true;
++    	        	}
++    			case ACCESS_TYPE_ICC:
++    				if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getIccAccessSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        			
++    	        		return true;
++    	        	}
++    	        default:
++    	        	notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        	return true;
++    		}
++    	}
++    	catch(Exception e){
++    		Log.e(P_TAG,"Got exception while checking for sms or ICC acess permission");
++    		e.printStackTrace();
++    		if(packageNames != null && pSetMan != null && packageNames.length > 0){
++    			PrivacySettings settings = pSetMan.getSettings(packageNames[0], -1);
++    			if(settings != null)
++    				notify(accessType, packageNames[0],PrivacySettings.REAL);
++    		}
++    		return true;
++    	}
++    }
++    
++    /**
++     * {@hide}
++     * Helper method for method isAllowed() to show dataAccess toasts
++     * @param accessType use ACCESS_TYPE_SMS_MMS or ACCESS_TYPE_ICC
++     * @param packageName the package name
++     * @param accessMode PrivacySettings.REAL || PrivacySettings.CUSTOM || PrivacySettings.RANDOM || PrivacySettings.EMPTY
++     */
++    protected void notify(int accessType,String packageName, byte accessMode){
++    	switch(accessType){
++    		case ACCESS_TYPE_SMS_MMS:
++    			//Log.i("PrivacySmsManager","now send notify information outgoing sms");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_SMS_SEND, null, null);
++    			break;
++    		case ACCESS_TYPE_ICC:
++    			//Log.i("PrivacySmsManager","now send notify information ICC ACCESS");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_ICC_ACCESS, null, null);
++    			break;
++    	}
++    }
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
+ 
+     /**
+      * Create a new SMS dispatcher.
+@@ -202,7 +326,13 @@ public abstract class SMSDispatcher extends Handler {
+         mMockSmsReceiver.registerReceiver();
+ 
+         createWakelock();
+-
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
++        if(pSetMan == null) new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         mSmsCapable = mContext.getResources().getBoolean(
+                 com.android.internal.R.bool.config_sms_capable);
+         mSmsReceiveDisabled = !SystemProperties.getBoolean(
+@@ -803,7 +933,7 @@ public abstract class SMSDispatcher extends Handler {
+     protected void sendMultipartText(String destAddr, String scAddr,
+             ArrayList<String> parts, ArrayList<PendingIntent> sentIntents,
+             ArrayList<PendingIntent> deliveryIntents) {
+-
++    	
+         int refNumber = getNextConcatenatedRef() & 0x00FF;
+         int msgCount = parts.size();
+         int encoding = android.telephony.SmsMessage.ENCODING_UNKNOWN;
+@@ -821,7 +951,7 @@ public abstract class SMSDispatcher extends Handler {
+             encodingForParts[i] = details;
+         }
+ 
+-        for (int i = 0; i < msgCount; i++) {
++        for (int i = 0; i < msgCount; i++) { 
+             SmsHeader.ConcatRef concatRef = new SmsHeader.ConcatRef();
+             concatRef.refNumber = refNumber;
+             concatRef.seqNumber = i + 1;  // 1-based sequence
+@@ -907,7 +1037,17 @@ public abstract class SMSDispatcher extends Handler {
+             }
+             return;
+         }
+-
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(), ACCESS_TYPE_SMS_MMS)){
++        	if (sentIntent != null) {
++                try {
++                    sentIntent.send(RESULT_ERROR_GENERIC_FAILURE);
++                    Log.i(TAG,"fake also delivery state to radio off!");
++                } catch (CanceledException e) {}
++            }
++        	return;
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+         HashMap<String, Object> map = new HashMap<String, Object>();
+         map.put("smsc", smsc);
+         map.put("pdu", pdu);
+diff --git a/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java b/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java
+index 106d4a5..9090d71 100755
+--- a/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java
++++ b/telephony/java/com/android/internal/telephony/cdma/CDMAPhone.java
+@@ -831,7 +831,7 @@ public class CDMAPhone extends PhoneBase {
+          super.notifyServiceStateChangedP(ss);
+      }
+ 
+-     void notifyLocationChanged() {
++     public void notifyLocationChanged() {
+          mNotifier.notifyCellLocation(this);
+      }
+ 
+diff --git a/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java b/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
+index 7f562cc..c73c2ae 100755
+--- a/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
++++ b/telephony/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
+@@ -40,8 +40,10 @@ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.Registrant;
+ import android.os.RegistrantList;
++
+ import android.os.SystemClock;
+ import android.os.SystemProperties;
++
+ import android.provider.Settings;
+ import android.provider.Settings.Secure;
+ import android.provider.Settings.SettingNotFoundException;
+@@ -59,8 +61,17 @@ import java.io.PrintWriter;
+ import java.util.Arrays;
+ import java.util.Calendar;
+ import java.util.Date;
++
+ import java.util.TimeZone;
+ 
++/////////////////////////////////////////////////////////
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++import java.util.Random;
++/////////////////////////////////////////////////////////
++
+ /**
+  * {@hide}
+  */
+@@ -117,6 +128,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+     String mSavedTimeZone;
+     long mSavedTime;
+     long mSavedAtTime;
++    
++    //-------------------------------------------------------------------------------------------------------------------------------------------------
++    private Context mContext;
++    private PrivacySettingsManager pSetMan;
++    //-------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+     /**
+      * We can't register for SIM_RECORDS_LOADED immediately because the
+@@ -208,6 +224,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+         setSignalStrengthDefaultValues();
+ 
+         mNeedToRegForRuimLoaded = true;
++        
++        //-------------------------------------------------------------------------------------------------------------------------------------------------
++        this.mContext = phone.getContext();
++        pSetMan = new PrivacySettingsManager(mContext, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++        //-------------------------------------------------------------------------------------------------------------------------------------------------
+     }
+ 
+     public void dispose() {
+@@ -382,10 +403,21 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+                         loge("error parsing cell location data: " + ex);
+                     }
+                 }
+-
+-                cellLoc.setCellLocationData(baseStationId, baseStationLatitude,
+-                        baseStationLongitude, systemId, networkId);
++                //----------------------------------------------------------------------------------------------------------------------------------------------------------
++                PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
++                if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
++                	//we will update with invalid cell location values
++                	cellLoc.setStateInvalid();
++                }
++                else if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.RANDOM){
++                	Random values = new Random();
++                	cellLoc.setCellLocationData(values.nextInt(), values.nextInt(), values.nextInt(), values.nextInt(), values.nextInt());
++                }
++                else{
++                	cellLoc.setCellLocationData(baseStationId, baseStationLatitude, baseStationLongitude, systemId, networkId);
++                }
+                 phone.notifyLocationChanged();
++                //----------------------------------------------------------------------------------------------------------------------------------------------------------
+             }
+ 
+             // Release any temporary cell lock, which could have been
+@@ -573,6 +605,7 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+     protected void handlePollStateResultMessage(int what, AsyncResult ar){
+         int ints[];
+         String states[];
++  	PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
+         switch (what) {
+         case EVENT_POLL_STATE_REGISTRATION_CDMA: // Handle RIL_REQUEST_REGISTRATION_STATE.
+             states = (String[])ar.result;
+@@ -662,8 +695,19 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+ 
+ 
+             // Values are -1 if not available.
+-            newCellLoc.setCellLocationData(baseStationId, baseStationLatitude,
+-                    baseStationLongitude, systemId, networkId);
++            //-------------------------------------------------------------------------------------------------------------------------------------------------------------
++            if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
++            	//we will update with invalid cell location and station values
++            	newCellLoc.setStateInvalid();
++            }
++            else if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.RANDOM){
++            	Random values = new Random();
++            	newCellLoc.setCellLocationData(values.nextInt(), values.nextInt(), values.nextInt(), values.nextInt(), values.nextInt());
++            }
++            else{
++            	newCellLoc.setCellLocationData(baseStationId, baseStationLatitude, baseStationLongitude, systemId, networkId);
++            }
++            //-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+             if (reasonForDenial == 0) {
+                 mRegistrationDeniedReason = ServiceStateTracker.REGISTRATION_DENIED_GEN;
+@@ -694,14 +738,25 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+                                 "'= " + opNames[2]);
+                     }
+                 }
+-
++                //-----------------------------------------------------------------------------------------------------------------------------------------------------
+                 if (!isSubscriptionFromRuim) {
+                     // In CDMA in case on NV, the ss.mOperatorAlphaLong is set later with the
+                     // ERI text, so here it is ignored what is coming from the modem.
+-                    newSS.setOperatorName(null, opNames[1], opNames[2]);
++                	if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
++                		newSS.setOperatorName(null, "", "");
++                	}
++                	else{
++                		newSS.setOperatorName(null, opNames[1], opNames[2]);
++                	}
+                 } else {
+-                    newSS.setOperatorName(opNames[0], opNames[1], opNames[2]);
++                	if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
++                		newSS.setOperatorName("", "", "");
++                	}
++                	else{
++                		newSS.setOperatorName(opNames[0], opNames[1], opNames[2]);
++                	}
+                 }
++                //-----------------------------------------------------------------------------------------------------------------------------------------------------
+             } else {
+                 if (DBG) log("EVENT_POLL_STATE_OPERATOR_CDMA: error parsing opNames");
+             }
+@@ -1002,15 +1057,30 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+             if ((cm.getRadioState().isOn()) && (!isSubscriptionFromRuim)) {
+                 String eriText;
+                 // Now the CDMAPhone sees the new ServiceState so it can get the new ERI text
+-                if (ss.getState() == ServiceState.STATE_IN_SERVICE) {
+-                    eriText = phone.getCdmaEriText();
+-                } else {
+-                    // Note that ServiceState.STATE_OUT_OF_SERVICE is valid used for
+-                    // mRegistrationState 0,2,3 and 4
+-                    eriText = phone.getContext().getText(
+-                            com.android.internal.R.string.roamingTextSearching).toString();
++                //---------------------------------------------------------------------------------------------------------------------------------------------------------
++                PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
++                if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
++                	if (ss.getState() == ServiceState.STATE_IN_SERVICE) {
++                        eriText = "";
++                    } else {
++                        // Note that ServiceState.STATE_OUT_OF_SERVICE is valid used for
++                        // mRegistrationState 0,2,3 and 4
++                        eriText = phone.getContext().getText(
++                                com.android.internal.R.string.roamingTextSearching).toString();
++                    }
++                } else{
++                	//original code
++                	if (ss.getState() == ServiceState.STATE_IN_SERVICE) {
++                        eriText = phone.getCdmaEriText();
++                    } else {
++                        // Note that ServiceState.STATE_OUT_OF_SERVICE is valid used for
++                        // mRegistrationState 0,2,3 and 4
++                        eriText = phone.getContext().getText(
++                                com.android.internal.R.string.roamingTextSearching).toString();
++                    }
+                 }
+                 ss.setOperatorAlphaLong(eriText);
++                //---------------------------------------------------------------------------------------------------------------------------------------------------------
+             }
+ 
+             String operatorNumeric;
+diff --git a/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java b/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java
+index 9cd059d..291b450 100644
+--- a/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java
++++ b/telephony/java/com/android/internal/telephony/cdma/RuimSmsInterfaceManager.java
+@@ -22,18 +22,27 @@ import android.os.AsyncResult;
+ import android.os.Handler;
+ import android.os.Message;
+ import android.util.Log;
+-
+ import com.android.internal.telephony.IccConstants;
+ import com.android.internal.telephony.IccSmsInterfaceManager;
+ import com.android.internal.telephony.IccUtils;
+ import com.android.internal.telephony.PhoneProxy;
+ import com.android.internal.telephony.SMSDispatcher;
+ import com.android.internal.telephony.SmsRawData;
+-
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.List;
+ 
++
++/////////////////////////////////////////////////////////////
++import android.content.pm.PackageManager;
++import android.os.Binder;
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++/////////////////////////////////////////////////////////////
++
++
+ import static android.telephony.SmsManager.STATUS_ON_ICC_FREE;
+ 
+ /**
+@@ -51,6 +60,122 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
+     private static final int EVENT_LOAD_DONE = 1;
+     private static final int EVENT_UPDATE_DONE = 2;
+ 
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++    protected PrivacySettingsManager pSetMan;
++    
++    protected static final String P_TAG = "PrivacySMSInterfaceManager";
++    
++    protected static final int ACCESS_TYPE_SMS_MMS = 0;
++	protected static final int ACCESS_TYPE_ICC = 1;
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++	//-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    /**
++     * Gives the actual package names which are trying to send sms
++     * {@hide}
++     * @return package name array or null
++     */
++	protected String[] getPackageName(){
++		 PackageManager pm = mContext.getPackageManager();
++	     String[] packageNames = pm.getPackagesForUid(Binder.getCallingUid());
++	     return packageNames;
++	}
++    
++    /**
++     * This method also includes notifications!
++     * @param packageNames 
++     * @param accessType use constants ACCESS_TYPE_SMS_MMS and ACCESS_TYPE_ICC
++     * @return true if package is allowed or exception was thrown or packages are empty, false if package is not allowed 
++     * {@hide}
++     */
++    protected boolean isAllowed(String[] packageNames, int accessType){
++    	try{
++    		switch(accessType){
++    			case ACCESS_TYPE_SMS_MMS:
++    				PrivacySettings settings = null;
++    	        	if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getSmsSendSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	     
++    	        		return true;
++    	        	}
++    			case ACCESS_TYPE_ICC:
++    				if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getIccAccessSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        			
++    	        		return true;
++    	        	}
++    			default:
++    	        	notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        	return true;
++    		}
++    		
++    	}
++    	catch(Exception e){
++    		Log.e(P_TAG,"Got exception while checking for sms or ICC acess permission");
++    		e.printStackTrace();
++    		if(packageNames != null && pSetMan != null && packageNames.length > 0){
++    			PrivacySettings settings = pSetMan.getSettings(packageNames[0], -1);
++    			if(settings != null)
++    				notify(accessType, packageNames[0],PrivacySettings.REAL);
++    		}
++    		return true;
++    	}
++    }
++    
++    /**
++     * {@hide}
++     * Helper method for method isAllowed() to show dataAccess toasts
++     * @param accessType use ACCESS_TYPE_SMS_MMS or ACCESS_TYPE_ICC
++     * @param packageName the package name
++     * @param accessMode PrivacySettings.REAL || PrivacySettings.CUSTOM || PrivacySettings.RANDOM || PrivacySettings.EMPTY
++     */
++    protected void notify(int accessType,String packageName, byte accessMode){
++    	switch(accessType){
++    		case ACCESS_TYPE_SMS_MMS:
++    			//Log.i("PrivacySmsManager","now send notify information outgoing sms");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_SMS_SEND, null, null);
++    			break;
++    		case ACCESS_TYPE_ICC:
++    			//Log.i("PrivacySmsManager","now send notify information ICC ACCESS");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_ICC_ACCESS, null, null);
++    			break;
++    	}
++    }
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
+     Handler mHandler = new Handler() {
+         @Override
+         public void handleMessage(Message msg) {
+@@ -114,6 +239,13 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
+         if (DBG) log("updateMessageOnIccEf: index=" + index +
+                 " status=" + status + " ==> " +
+                 "("+ pdu + ")");
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return false;
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         enforceReceiveAndSend("Updating message on RUIM");
+         synchronized(mLock) {
+             mSuccess = false;
+@@ -150,6 +282,13 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
+         //NOTE smsc not used in RUIM
+         if (DBG) log("copyMessageToIccEf: status=" + status + " ==> " +
+                 "pdu=("+ Arrays.toString(pdu) + ")");
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return false;
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         enforceReceiveAndSend("Copying message to RUIM");
+         synchronized(mLock) {
+             mSuccess = false;
+@@ -173,6 +312,12 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
+     public List<SmsRawData> getAllMessagesFromIccEf() {
+         if (DBG) log("getAllMessagesFromEF");
+ 
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return new ArrayList<SmsRawData>();
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         Context context = mPhone.getContext();
+ 
+         context.enforceCallingPermission(
+@@ -218,5 +363,6 @@ public class RuimSmsInterfaceManager extends IccSmsInterfaceManager {
+     protected void log(String msg) {
+         Log.d(LOG_TAG, "[RuimSmsInterfaceManager] " + msg);
+     }
++    
+ }
+ 
+diff --git a/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java b/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java
+index 432c596..7144119 100644
+--- a/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java
++++ b/telephony/java/com/android/internal/telephony/gsm/GSMPhone.java
+@@ -360,7 +360,7 @@ public class GSMPhone extends PhoneBase {
+     /**
+      * Notify any interested party of a Phone state change {@link Phone.State}
+      */
+-    /*package*/ void notifyPhoneStateChanged() {
++    /*package*/ public void notifyPhoneStateChanged() {
+         mNotifier.notifyPhoneState(this);
+     }
+ 
+@@ -398,7 +398,7 @@ public class GSMPhone extends PhoneBase {
+     }
+ 
+     /*package*/
+-    void notifyLocationChanged() {
++    public void notifyLocationChanged() {
+         mNotifier.notifyCellLocation(this);
+     }
+ 
+diff --git a/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java b/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
+index dbba6d8..b746ab0 100644
+--- a/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
++++ b/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
+@@ -47,6 +47,7 @@ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.Registrant;
+ import android.os.RegistrantList;
++
+ import android.os.SystemClock;
+ import android.os.SystemProperties;
+ import android.provider.Settings;
+@@ -59,7 +60,6 @@ import android.text.TextUtils;
+ import android.util.EventLog;
+ import android.util.Log;
+ import android.util.TimeUtils;
+-
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
+@@ -70,6 +70,14 @@ import java.util.Date;
+ import java.util.HashSet;
+ import java.util.TimeZone;
+ 
++//////////////////////////////////////////////////////////
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++import java.util.Random;
++//////////////////////////////////////////////////////////
++
+ /**
+  * {@hide}
+  */
+@@ -81,7 +89,12 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+     GsmCellLocation cellLoc;
+     GsmCellLocation newCellLoc;
+     int mPreferredNetworkType;
+-
++    
++    //--------------------------------------------------------------------------
++    private Context mContext;
++    private PrivacySettingsManager pSetMan;
++    //--------------------------------------------------------------------------
++    
+     private int gprsState = ServiceState.STATE_OUT_OF_SERVICE;
+     private int newGPRSState = ServiceState.STATE_OUT_OF_SERVICE;
+     private int mMaxDataCalls = 1;
+@@ -237,7 +250,13 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+         IntentFilter filter = new IntentFilter();
+         filter.addAction(Intent.ACTION_LOCALE_CHANGED);
+         phone.getContext().registerReceiver(mIntentReceiver, filter);
+-
++        
++        //--------------------------------------------------------------------------
++        this.mContext = phone.getContext();
++        pSetMan = new PrivacySettingsManager(mContext, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++        //--------------------------------------------------------------------------
++        
++        
+         // Gsm doesn't support OTASP so its not needed
+         phone.notifyOtaspChanged(OTASP_NOT_NEEDED);
+     }
+@@ -351,8 +370,24 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+                             Log.w(LOG_TAG, "error parsing location: " + ex);
+                         }
+                     }
+-                    cellLoc.setLacAndCid(lac, cid);
+-                    phone.notifyLocationChanged();
++                    //---------------------------------------------------------------------------------------------------------------------
++                    PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
++                    if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
++                    	//we will update with invalid cell location values
++                    	cellLoc.setStateInvalid();
++                    	phone.notifyLocationChanged();
++                    }
++                    else if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.RANDOM){
++                    	Random values = new Random();
++                    	cellLoc.setLacAndCid(values.nextInt(), values.nextInt());
++                        phone.notifyLocationChanged();
++                    }
++                    else{
++                    	cellLoc.setLacAndCid(lac, cid);
++                        phone.notifyLocationChanged();
++                    }
++                    //---------------------------------------------------------------------------------------------------------------------
++                    
+                 }
+ 
+                 // Release any temporary cell lock, which could have been
+@@ -497,8 +532,19 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+ 
+     protected void updateSpnDisplay() {
+         int rule = phone.mIccRecords.getDisplayRule(ss.getOperatorNumeric());
+-        String spn = phone.mIccRecords.getServiceProviderName();
+-        String plmn = ss.getOperatorAlphaLong();
++        PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
++	String spn;
++        //--------------------------------------------------------------------------------------------------------------------------------
++        //this part is needed because we do not changed the IccRecord class
++        if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
++        	spn = "";
++        }
++        else{
++        	spn = phone.mIccRecords.getServiceProviderName();
++        }
++        //--------------------------------------------------------------------------------------------------------------------------------
++        
++        String plmn = ss.getOperatorAlphaLong(); //we can do this, because catched it before
+ 
+         // For emergency calls only, pass the EmergencyCallsOnly string via EXTRA_PLMN
+         if (mEmergencyOnly && cm.getRadioState().isOn()) {
+@@ -568,6 +614,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+                         ar.exception);
+             }
+         } else try {
++        	PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
+             switch (what) {
+                 case EVENT_POLL_STATE_REGISTRATION:
+                     states = (String[])ar.result;
+@@ -607,8 +654,23 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+                     }
+ 
+                     // LAC and CID are -1 if not avail
+-                    newCellLoc.setLacAndCid(lac, cid);
+-                    newCellLoc.setPsc(psc);
++                    //--------------------------------------------------------------------------------------------------------------------------------
++                    if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
++                    	//we will update with invalid cell location values
++                    	newCellLoc.setStateInvalid();
++                        newCellLoc.setPsc(psc);
++                    }
++                    else if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.RANDOM){
++                    	Random values = new Random();
++                    	newCellLoc.setLacAndCid(values.nextInt(), values.nextInt());
++                        newCellLoc.setPsc(psc);
++                    }
++                    else{
++                    	newCellLoc.setLacAndCid(lac, cid);
++                        newCellLoc.setPsc(psc);
++                    }
++                    //--------------------------------------------------------------------------------------------------------------------------------
++                    
+                 break;
+ 
+                 case EVENT_POLL_STATE_GPRS:
+@@ -646,7 +708,14 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+                     String opNames[] = (String[])ar.result;
+ 
+                     if (opNames != null && opNames.length >= 3) {
+-                         newSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
++                    	//--------------------------------------------------------------------------------------------------------------------------------
++                        if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
++                        	newSS.setOperatorName ("", "", "");
++                        }
++                        else{
++                        	newSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
++                        }
++                        //--------------------------------------------------------------------------------------------------------------------------------
+                     }
+                 break;
+ 
+@@ -1000,7 +1069,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+         }
+ 
+         if (hasLocationChanged) {
+-            phone.notifyLocationChanged();
++            phone.notifyLocationChanged(); //we can notify, because all sensitive data has changed before @author CollegeDev
+         }
+ 
+         if (! isGprsConsistent(gprsState, ss.getState())) {
+diff --git a/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java b/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java
+index 92bf390..7baf1ea 100644
+--- a/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java
++++ b/telephony/java/com/android/internal/telephony/gsm/SimSmsInterfaceManager.java
+@@ -38,6 +38,13 @@ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Set;
+ 
++//////////////////////////////////////////////////////////////
++import android.os.ServiceManager;
++import android.privacy.IPrivacySettingsManager;
++import android.privacy.PrivacySettings;
++import android.privacy.PrivacySettingsManager;
++/////////////////////////////////////////////////////////////
++
+ import static android.telephony.SmsManager.STATUS_ON_ICC_FREE;
+ 
+ /**
+@@ -63,6 +70,122 @@ public class SimSmsInterfaceManager extends IccSmsInterfaceManager {
+     private static final int EVENT_SET_BROADCAST_CONFIG_DONE = 4;
+     private static final int SMS_CB_CODE_SCHEME_MIN = 0;
+     private static final int SMS_CB_CODE_SCHEME_MAX = 255;
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++    protected PrivacySettingsManager pSetMan;
++    
++    protected static final String P_TAG = "PrivacySMSInterfaceManager";
++    
++    protected static final int ACCESS_TYPE_SMS_MMS = 0;
++	protected static final int ACCESS_TYPE_ICC = 1;
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++    /**
++     * Gives the actual package names which are trying to send sms
++     * {@hide}
++     * @return package name array or null
++     */
++	protected String[] getPackageName(){
++		 PackageManager pm = mContext.getPackageManager();
++	     String[] packageNames = pm.getPackagesForUid(Binder.getCallingUid());
++	     return packageNames;
++	}
++    
++    /**
++     * This method also includes notifications!
++     * @param packageNames 
++     * @param accessType use constants ACCESS_TYPE_SMS_MMS and ACCESS_TYPE_ICC
++     * @return true if package is allowed or exception was thrown or packages are empty, false if package is not allowed 
++     * {@hide}
++     */
++    protected boolean isAllowed(String[] packageNames, int accessType){
++    	try{
++    		switch(accessType){
++    			case ACCESS_TYPE_SMS_MMS:
++    				PrivacySettings settings = null;
++    	        	if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getSmsSendSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	     
++    	        		return true;
++    	        	}
++    			case ACCESS_TYPE_ICC:
++    				if(pSetMan == null) pSetMan = new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++    	        	if(pSetMan != null && packageNames != null){
++    	        		for(int i=0; i < packageNames.length; i++){
++    	            		settings = pSetMan.getSettings(packageNames[i], -1);
++    	            		if(pSetMan != null && settings != null && settings.getIccAccessSetting() != PrivacySettings.REAL){
++    	            			notify(accessType, packageNames[i],PrivacySettings.EMPTY);
++    	            			return false;
++    	            		}
++    	            		settings = null;
++    	            	}
++    	        		notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        		return true;
++    	        	}
++    	        	else{
++    	        		if(packageNames != null && packageNames.length > 0)
++    	        			notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        			
++    	        		return true;
++    	        	}
++    	        default:
++    	        	notify(accessType, packageNames[0],PrivacySettings.REAL);
++    	        	return true;
++    		}
++    		
++    	}
++    	catch(Exception e){
++    		Log.e(P_TAG,"Got exception while checking for sms or ICC acess permission");
++    		e.printStackTrace();
++    		if(packageNames != null && pSetMan != null && packageNames.length > 0){
++    			PrivacySettings settings = pSetMan.getSettings(packageNames[0], -1);
++    			if(settings != null)
++    				notify(accessType, packageNames[0],PrivacySettings.REAL);
++    		}
++    		return true;
++    	}
++    }
++    
++    /**
++     * {@hide}
++     * Helper method for method isAllowed() to show dataAccess toasts
++     * @param accessType use ACCESS_TYPE_SMS_MMS or ACCESS_TYPE_ICC
++     * @param packageName the package name
++     * @param accessMode PrivacySettings.REAL || PrivacySettings.CUSTOM || PrivacySettings.RANDOM || PrivacySettings.EMPTY
++     */
++    protected void notify(int accessType,String packageName, byte accessMode){
++    	switch(accessType){
++    		case ACCESS_TYPE_SMS_MMS:
++    			//Log.i("PrivacySmsManager","now send notify information outgoing sms");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_SMS_SEND, null, null);
++    			break;
++    		case ACCESS_TYPE_ICC:
++    			//Log.i("PrivacySmsManager","now send notify information ICC ACCESS");
++    			pSetMan.notification(packageName, 0, accessMode, PrivacySettings.DATA_ICC_ACCESS, null, null);
++    			break;
++    	}
++    }
++    
++    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+ 
+     Handler mHandler = new Handler() {
+         @Override
+@@ -136,6 +259,11 @@ public class SimSmsInterfaceManager extends IccSmsInterfaceManager {
+         if (DBG) log("updateMessageOnIccEf: index=" + index +
+                 " status=" + status + " ==> " +
+                 "("+ Arrays.toString(pdu) + ")");
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return false;
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+         enforceReceiveAndSend("Updating message on SIM");
+         synchronized(mLock) {
+             mSuccess = false;
+@@ -173,6 +301,13 @@ public class SimSmsInterfaceManager extends IccSmsInterfaceManager {
+         if (DBG) log("copyMessageToIccEf: status=" + status + " ==> " +
+                 "pdu=("+ Arrays.toString(pdu) +
+                 "), smsm=(" + Arrays.toString(smsc) +")");
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return false;
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         enforceReceiveAndSend("Copying message to SIM");
+         synchronized(mLock) {
+             mSuccess = false;
+@@ -198,6 +333,12 @@ public class SimSmsInterfaceManager extends IccSmsInterfaceManager {
+     public List<SmsRawData> getAllMessagesFromIccEf() {
+         if (DBG) log("getAllMessagesFromEF");
+ 
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        if(!isAllowed(getPackageName(),ACCESS_TYPE_ICC)){
++        	return new ArrayList<SmsRawData>();
++        }
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+         Context context = mPhone.getContext();
+ 
+         context.enforceCallingPermission(
+diff --git a/telephony/java/com/android/internal/telephony/sip/SipPhone.java b/telephony/java/com/android/internal/telephony/sip/SipPhone.java
+index 5471289..8414edf 100644
+--- a/telephony/java/com/android/internal/telephony/sip/SipPhone.java
++++ b/telephony/java/com/android/internal/telephony/sip/SipPhone.java
+@@ -60,7 +60,7 @@ public class SipPhone extends SipPhoneBase {
+     private SipManager mSipManager;
+     private SipProfile mProfile;
+ 
+-    SipPhone (Context context, PhoneNotifier notifier, SipProfile profile) {
++    public SipPhone (Context context, PhoneNotifier notifier, SipProfile profile) {
+         super(context, notifier);
+ 
+         if (DEBUG) Log.d(LOG_TAG, "new SipPhone: " + profile.getUriString());
+diff --git a/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java b/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java
+index 611e3ea..d4ddc1d 100644
+--- a/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java
++++ b/telephony/java/com/android/internal/telephony/sip/SipPhoneFactory.java
+@@ -21,6 +21,7 @@ import com.android.internal.telephony.PhoneNotifier;
+ import android.content.Context;
+ import android.net.sip.SipProfile;
+ import android.util.Log;
++import android.privacy.surrogate.PrivacySipPhone;
+ 
+ import java.text.ParseException;
+ 
+@@ -40,7 +41,7 @@ public class SipPhoneFactory {
+             PhoneNotifier phoneNotifier) {
+         try {
+             SipProfile profile = new SipProfile.Builder(sipUri).build();
+-            return new SipPhone(context, phoneNotifier, profile);
++            return new PrivacySipPhone(context, phoneNotifier, profile);
+         } catch (ParseException e) {
+             Log.w("SipPhoneFactory", "makePhone", e);
+             return null;
+diff --git a/wifi/java/android/net/wifi/WifiInfo.java b/wifi/java/android/net/wifi/WifiInfo.java
+index 1f1cfdd..9ed2f7d 100644
+--- a/wifi/java/android/net/wifi/WifiInfo.java
++++ b/wifi/java/android/net/wifi/WifiInfo.java
+@@ -76,6 +76,24 @@ public class WifiInfo implements Parcelable {
+      */
+     private boolean mMeteredHint;
+ 
++
++    // BEGIN privacy-added
++    /**
++     * Constructor for faking WifiInfo
++     * @hide
++     */
++    public WifiInfo(boolean fake){
++	mSSID = "";
++        mBSSID = "";
++        mNetworkId = -1;
++        mSupplicantState = SupplicantState.UNINITIALIZED;
++        mRssi = -9999;
++        mLinkSpeed = -1;
++        mHiddenSSID = false;
++    }
++    // END privacy-added
++
++
+     WifiInfo() {
+         mSSID = null;
+         mBSSID = null;
