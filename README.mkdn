@@ -1,4 +1,4 @@
-OpenPdroid for Android 4.2.1
+OpenPdroid v1.0.1 for Android 4.2.1
 ===============================
 
 
@@ -18,7 +18,7 @@ To Apply
 --------------
 	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_build.patch
 	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_libcore.patch
-	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_Mms.patch
+	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_packages_apps_Mms.patch
 	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_frameworks_base.patch
 	cd ~/android/system/frameworks/opt/telephony; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2.1_frameworks_opt_telephony.patch
 	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
