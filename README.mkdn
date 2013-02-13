@@ -1,0 +1,44 @@
+OpenPdroidv1.0.1 for Android 4.1.2 (AOSP Version)
+===============================
+
+
+These are the current build patches for AOSP Android 4.1.2 and should generally reflect the current state of the ```jb-mr0-release-openpdroid``` branch.
+The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
+
+Due to a restriction in the dalvik code, AOSP and most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.2-cm``` patches.** 
+
+We realize that the patch/branch situation is not perfect, it is work in progress.
+
+The current best advice as to how to apply/remove them is below. Some easier application methods are being discussed.
+
+To Apply
+--------------
+	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-aosp_build.patch
+    cd ~/android/system/system/core; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-aosp_system_core.patch
+	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-aosp_libcore.patch
+	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-aosp_packages_apps_Mms.patch
+	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-aosp_frameworks_base.patch
+	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
+
+
+To Remove
+--------------
+	cd ~/android/system; rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates out/target/common/obj/JAVA_LIBRARIES/telephony-common_intermediates out/target/common/obj/APPS/Mms_intermediates
+
+**[OR]** 	cd ~/android; make clobber
+
+**and** to reset your source tree**
+
+	cd ~/android/system/build; git checkout . ; git clean -df
+	cd ~/android/system/system/core; git checkout . ; git clean -df
+	cd ~/android/system/libcore; git checkout . ; git clean -df
+	cd ~/android/system/frameworks/base; git checkout . ; git clean -df
+	cd ~/android/system/packages/apps/Mms; git checkout . ; git clean -df
+	cd ~/android/system; repo abandon openpdroid
+
+If OpenPDroid intrigues you, yet the thought of applying all these patches gives you
+pause, there is a tool that can attempt to patch the framework of an already compiled
+rom called [The Auto-Patcher](http://forum.xda-developers.com/showthread.php?p=32155918#post32155918). 
+
+
+OpenPDroid is an open source fork of the PDroid framework, as written by Svyat and expanded by CollegeDev. We are always looking for contributors, [come see us on XDA](http://forum.xda-developers.com/showthread.php?t=2098156) or submit a pull request.
