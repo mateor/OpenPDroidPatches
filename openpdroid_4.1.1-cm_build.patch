@@ -1,8 +1,7 @@
-diff --git a/core/pathmap.mk b/core/pathmap.mk
-index ab55fd6..58cb46b 100644
---- a/core/pathmap.mk
-+++ b/core/pathmap.mk
-@@ -84,6 +84,7 @@ JNI_H_INCLUDE := $(call include-path-for,libnativehelper)/nativehelper
+diff -Npru --exclude='.git*' cyanogen/build/core/pathmap.mk pang/build/core/pathmap.mk
+--- cyanogen/build/core/pathmap.mk	2012-07-13 08:59:33.472884054 -0700
++++ pang/build/core/pathmap.mk	2012-07-13 10:18:29.349669133 -0700
+@@ -84,6 +84,7 @@ JNI_H_INCLUDE := $(call include-path-for
  # is so common and the other framework libraries can have mutual
  # interdependencies.
  #
@@ -18,18 +17,17 @@ index ab55fd6..58cb46b 100644
  	    sax \
  	    telephony \
  	    wifi \
-@@ -103,6 +105,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+@@ -102,6 +104,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+ 	    icu4j \
  	    voip \
- 	    fmradio \
  	 )
 +# END privacy-added: privacy
  
  #
  # A version of FRAMEWORKS_BASE_SUBDIRS that is expanded to full paths from
-diff --git a/target/product/core.mk b/target/product/core.mk
-index 51e60ac..4cd23f9 100644
---- a/target/product/core.mk
-+++ b/target/product/core.mk
+diff -Npru --exclude='.git*' cyanogen/build/target/product/core.mk pang/build/target/product/core.mk
+--- cyanogen/build/target/product/core.mk	2012-07-13 08:59:33.478885480 -0700
++++ pang/build/target/product/core.mk	2012-07-13 10:18:29.349669133 -0700
 @@ -18,6 +18,7 @@ PRODUCT_BRAND := generic
  PRODUCT_DEVICE := generic
  PRODUCT_NAME := core
@@ -46,7 +44,7 @@ index 51e60ac..4cd23f9 100644
      PackageInstaller \
      PicoTts \
      SettingsProvider \
-@@ -119,6 +121,7 @@ PRODUCT_PACKAGES := \
+@@ -117,6 +119,7 @@ PRODUCT_PACKAGES := \
      sensorservice \
      lint \
      uiautomator
@@ -54,11 +52,10 @@ index 51e60ac..4cd23f9 100644
  
  PRODUCT_COPY_FILES += \
      system/core/rootdir/init.usb.rc:root/init.usb.rc \
-diff --git a/target/product/security/privacy.x509.pem b/target/product/security/privacy.x509.pem
-new file mode 100644
-index 0000000..28279a0
---- /dev/null
-+++ b/target/product/security/privacy.x509.pem
+Binary files cyanogen/build/target/product/security/privacy.pk8 and pang/build/target/product/security/privacy.pk8 differ
+diff -Npru --exclude='.git*' cyanogen/build/target/product/security/privacy.x509.pem pang/build/target/product/security/privacy.x509.pem
+--- cyanogen/build/target/product/security/privacy.x509.pem	1969-12-31 16:00:00.000000000 -0800
++++ pang/build/target/product/security/privacy.x509.pem	2012-07-13 10:18:29.356671097 -0700
 @@ -0,0 +1,20 @@
 +-----BEGIN CERTIFICATE-----
 +MIIDNDCCAhwCCQCXWkdOAj3rWTANBgkqhkiG9w0BAQUFADBcMQswCQYDVQQGEwJE

@@ -1,28 +1,32 @@
-OpenPdroid for Android 4.1.2 (Cyanogen10/Custom Version)
+OpenPdroid for Android 4.1.1 (Cyanogen10/Custom Version)
 ===============================
 
+**<u>Note</u>**: This is mostly presented for history, as these patches __<u>pre-date</u>__, and __<u>are incompatible</u>__ with, Pdroid2.0 and PDroidManager.
 
-These are the current build patches for Cyanogen10 (and most other Android 4.1.2 custom roms, e.g. AOKP) and should generally reflect the current state of the ```cm-jellybean-openpdroid``` branch.
-The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
+These patches were created to work with Svyat's original PDroid application.
 
-Due to a restriction in the dalvik code, AOSP vs. most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.2-cm``` patches.** 
+Patches
+-------------------------------
 
+These patches are ports from Svyat's original source patches, ported forward by pastime1971 and mateor. 
+<ul>
+Due to a restriction in the dalvik code, AOSP vs. most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.x-cm``` patches.** 
+</ul>
 We realize that the patch/branch situation is not perfect, it is work in progress.
 
 The current best advice as to how to apply/remove them is below. Some easier application methods are being discussed.
 
 To Apply
 --------------
-	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_build.patch
-	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_libcore.patch
-	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_packages_apps_Mms.patch
-	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.2-cm_frameworks_base.patch
+	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.1-cm_build.patch
+	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.1-cm_libcore.patch
+	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.1.1-cm_frameworks_base.patch
 	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
 
 
 To Remove
 --------------
-	cd ~/android/system; rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates out/target/common/obj/JAVA_LIBRARIES/telephony-common_intermediates out/target/common/obj/APPS/Mms_intermediates
+	cd ~/android/system; rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates  out/target/common/obj/APPS/services_intermediates
 
 **[OR]** 	cd ~/android; make clobber
 
@@ -31,12 +35,11 @@ To Remove
 	cd ~/android/system/build; git checkout . ; git clean -df
 	cd ~/android/system/libcore; git checkout . ; git clean -df
 	cd ~/android/system/frameworks/base; git checkout . ; git clean -df
-	cd ~/android/system/packages/apps/Mms; git checkout . ; git clean -df
 	cd ~/android/system; repo abandon openpdroid
 
 If OpenPDroid intrigues you, yet the thought of applying all these patches gives you
 pause, there is a tool that can attempt to patch the framework of an already compiled
-rom called [The Auto-Patcher](http://forum.xda-developers.com/showthread.php?p=32155918#post32155918). 
+rom called [The Auto-Patcher](http://forum.xda-developers.com/showthread.php?p=32155918#post32155918). The Auto-patcher still supports these patches, though under the 'pdroid' mod-type.
 
 
 OpenPDroid is an open source fork of the PDroid framework, as written by Svyat and expanded by CollegeDev. We are always looking for contributors, [come see us on XDA](http://forum.xda-developers.com/showthread.php?t=2098156) or submit a pull request.
