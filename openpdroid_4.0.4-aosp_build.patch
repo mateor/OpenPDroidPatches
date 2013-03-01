@@ -1,21 +1,7 @@
-diff --git a/core/java.mk b/core/java.mk
-index 9a4f3a2..437fc08 100644
---- a/core/java.mk
-+++ b/core/java.mk
-@@ -43,7 +43,7 @@ ifneq ($(LOCAL_SDK_VERSION),)
-   endif
- else
-   ifneq ($(LOCAL_NO_STANDARD_LIBRARIES),true)
--    LOCAL_JAVA_LIBRARIES := core core-junit ext framework $(LOCAL_JAVA_LIBRARIES)
-+    LOCAL_JAVA_LIBRARIES := core core-junit ext framework framework2 $(LOCAL_JAVA_LIBRARIES)
-   endif
- endif
- 
-diff --git a/core/pathmap.mk b/core/pathmap.mk
-index 91a7fd4..1de1ee9 100644
---- a/core/pathmap.mk
-+++ b/core/pathmap.mk
-@@ -84,6 +84,7 @@ JNI_H_INCLUDE := $(call include-path-for,libnativehelper)/nativehelper
+diff -Npru --exclude=.svn --exclude='.git*' aosp/build/core/pathmap.mk pdroid/build/core/pathmap.mk
+--- aosp/build/core/pathmap.mk	2012-02-26 01:14:17.000000000 -0800
++++ pdroid/build/core/pathmap.mk	2012-03-30 13:21:22.138333718 -0700
+@@ -77,6 +77,7 @@ JNI_H_INCLUDE := $(call include-path-for
  # is so common and the other framework libraries can have mutual
  # interdependencies.
  #
@@ -23,15 +9,15 @@ index 91a7fd4..1de1ee9 100644
  FRAMEWORKS_BASE_SUBDIRS := \
  	$(addsuffix /java, \
  	    core \
-@@ -95,6 +96,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
- 	    media/mca/filterpacks \
+@@ -85,6 +86,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+ 	    media \
  	    drm \
  	    opengl \
 +	    privacy \
  	    sax \
  	    telephony \
  	    wifi \
-@@ -102,6 +104,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+@@ -92,6 +94,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
  	    icu4j \
  	    voip \
  	 )
@@ -39,22 +25,9 @@ index 91a7fd4..1de1ee9 100644
  
  #
  # A version of FRAMEWORKS_BASE_SUBDIRS that is expanded to full paths from
-diff --git a/core/user_tags.mk b/core/user_tags.mk
-index 24f563d..4beb54a 100644
---- a/core/user_tags.mk
-+++ b/core/user_tags.mk
-@@ -123,6 +123,7 @@ GRANDFATHERED_USER_MODULES += \
- 	exc_dump \
- 	fastboot \
- 	framework \
-+	framework2 \
- 	FrameworkCoreHostTests \
- 	frameworks-core-util-lib \
- 	fsck_msdos \
-diff --git a/target/product/core.mk b/target/product/core.mk
-index b7934b3..5e0fb2e 100644
---- a/target/product/core.mk
-+++ b/target/product/core.mk
+diff -Npru --exclude=.svn --exclude='.git*' aosp/build/target/product/core.mk pdroid/build/target/product/core.mk
+--- aosp/build/target/product/core.mk	2012-02-26 01:14:17.000000000 -0800
++++ pdroid/build/target/product/core.mk	2012-03-30 13:21:22.139333768 -0700
 @@ -22,6 +22,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
      ro.config.notification_sound=OnTheHunt.ogg \
      ro.config.alarm_alert=Alarm_Classic.ogg
@@ -71,27 +44,18 @@ index b7934b3..5e0fb2e 100644
      PackageInstaller \
      PicoTts \
      SettingsProvider \
-@@ -60,6 +62,7 @@ PRODUCT_PACKAGES := \
-     drmserver \
-     dx \
-     ext \
-+    framework2 \
-     framework-res \
-     hprof-conv \
-     icu.dat \
-@@ -121,6 +124,7 @@ PRODUCT_PACKAGES := \
-     sensorservice \
-     lint \
-     uiautomator
+@@ -98,6 +100,7 @@ PRODUCT_PACKAGES := \
+     libz \
+     screencap \
+     sensorservice
 +# END privacy-added: PDroid
  
- PRODUCT_COPY_FILES += \
-     system/core/rootdir/init.usb.rc:root/init.usb.rc \
-diff --git a/target/product/security/privacy.x509.pem b/target/product/security/privacy.x509.pem
-new file mode 100644
-index 0000000..28279a0
---- /dev/null
-+++ b/target/product/security/privacy.x509.pem
+ # host-only dependencies
+ ifeq ($(WITH_HOST_DALVIK),true)
+Binary files aosp/build/target/product/security/privacy.pk8 and pdroid/build/target/product/security/privacy.pk8 differ
+diff -Npru --exclude=.svn --exclude='.git*' aosp/build/target/product/security/privacy.x509.pem pdroid/build/target/product/security/privacy.x509.pem
+--- aosp/build/target/product/security/privacy.x509.pem	1969-12-31 16:00:00.000000000 -0800
++++ pdroid/build/target/product/security/privacy.x509.pem	2012-03-30 13:21:22.140333818 -0700
 @@ -0,0 +1,20 @@
 +-----BEGIN CERTIFICATE-----
 +MIIDNDCCAhwCCQCXWkdOAj3rWTANBgkqhkiG9w0BAQUFADBcMQswCQYDVQQGEwJE
