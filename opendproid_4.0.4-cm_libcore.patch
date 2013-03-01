@@ -1,6 +1,8 @@
-diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java pdroid/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java
---- aosp/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	1969-12-31 16:00:00.000000000 -0800
-+++ pdroid/libcore/luni/src/main/java/java/lang/PrivacyInputStream.java	2012-03-30 13:21:28.851741673 -0700
+diff --git a/luni/src/main/java/java/lang/PrivacyInputStream.java b/luni/src/main/java/java/lang/PrivacyInputStream.java
+new file mode 100644
+index 0000000..4986566
+--- /dev/null
++++ b/luni/src/main/java/java/lang/PrivacyInputStream.java
 @@ -0,0 +1,36 @@
 +package java.lang;
 +
@@ -38,9 +40,11 @@ diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java
 +    }
 +    
 +}   
-diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java pdroid/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java
---- aosp/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	1969-12-31 16:00:00.000000000 -0800
-+++ pdroid/libcore/luni/src/main/java/java/lang/PrivacyProcessManager.java	2012-03-30 13:21:28.852741763 -0700
+diff --git a/luni/src/main/java/java/lang/PrivacyProcessManager.java b/luni/src/main/java/java/lang/PrivacyProcessManager.java
+new file mode 100644
+index 0000000..3056a31
+--- /dev/null
++++ b/luni/src/main/java/java/lang/PrivacyProcessManager.java
 @@ -0,0 +1,143 @@
 +package java.lang;
 +
@@ -185,9 +189,10 @@ diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java
 +        }
 +    }
 +}
-diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java/lang/ProcessManager.java pdroid/libcore/luni/src/main/java/java/lang/ProcessManager.java
---- aosp/libcore/luni/src/main/java/java/lang/ProcessManager.java	2012-02-26 01:16:40.000000000 -0800
-+++ pdroid/libcore/luni/src/main/java/java/lang/ProcessManager.java	2012-03-30 13:21:28.853741857 -0700
+diff --git a/luni/src/main/java/java/lang/ProcessManager.java b/luni/src/main/java/java/lang/ProcessManager.java
+index c480185..62efbee 100644
+--- a/luni/src/main/java/java/lang/ProcessManager.java
++++ b/luni/src/main/java/java/lang/ProcessManager.java
 @@ -248,7 +248,12 @@ final class ProcessManager {
              this.pid = pid;
  
@@ -198,7 +203,7 @@ diff -Npru --exclude=.svn --exclude='.git*' aosp/libcore/luni/src/main/java/java
 +                this.inputStream = new ProcessInputStream(in);
 +            else
 +                this.inputStream = new PrivacyInputStream();
-+            // END privacy-modified
++            // END privacy-modified            
              this.outputStream = new ProcessOutputStream(out);
          }
  
