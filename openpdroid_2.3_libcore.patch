@@ -190,7 +190,7 @@ index 0000000..3056a31
 +    }
 +}
 diff --git a/luni/src/main/java/java/lang/ProcessManager.java b/luni/src/main/java/java/lang/ProcessManager.java
-index c480185..62efbee 100644
+index c480185..918cf4b 100644
 --- a/luni/src/main/java/java/lang/ProcessManager.java
 +++ b/luni/src/main/java/java/lang/ProcessManager.java
 @@ -248,7 +248,12 @@ final class ProcessManager {
@@ -199,7 +199,7 @@ index c480185..62efbee 100644
              this.errorStream = new ProcessInputStream(err);
 -            this.inputStream = new ProcessInputStream(in);
 +            // BEGIN privacy-modified
-+            if (PrivacyProcessManager.hasPrivacyPermission("systemLogsSetting", pid))
++            if (PrivacyProcessManager.hasPrivacyPermission("systemLogsSetting", id))
 +                this.inputStream = new ProcessInputStream(in);
 +            else
 +                this.inputStream = new PrivacyInputStream();
