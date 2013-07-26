@@ -1,0 +1,24 @@
+diff --git a/core/pathmap.mk b/core/pathmap.mk
+index 09f912e..bc55648 100644
+--- a/core/pathmap.mk
++++ b/core/pathmap.mk
+@@ -92,6 +92,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+ 	    media/mca/filterpacks \
+ 	    drm \
+ 	    opengl \
++	    privacy \
+ 	    sax \
+ 	    telephony \
+ 	    wifi \
+diff --git a/target/product/core_minimal.mk b/target/product/core_minimal.mk
+index 96a8592..209db5d 100644
+--- a/target/product/core_minimal.mk
++++ b/target/product/core_minimal.mk
+@@ -30,6 +30,7 @@ PRODUCT_PACKAGES += \
+     HTMLViewer \
+     MediaProvider \
+     PackageInstaller \
++    PDroid \
+     SettingsProvider \
+     Shell \
+     apache-xml \
