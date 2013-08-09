@@ -1944,11 +1944,10 @@ index 0000000..dbace04
 +
 +}
 diff --git a/src/java/com/android/internal/telephony/IccSmsInterfaceManager.java b/src/java/com/android/internal/telephony/IccSmsInterfaceManager.java
-index 03ed244..3c85dba 100644
+index 3352e82..f9443f8 100644
 --- a/src/java/com/android/internal/telephony/IccSmsInterfaceManager.java
 +++ b/src/java/com/android/internal/telephony/IccSmsInterfaceManager.java
-@@ -16,6 +16,15 @@
- 
+@@ -17,4 +17,13 @@
  package com.android.internal.telephony;
  
 +// BEGIN privacy additions
@@ -1962,9 +1961,7 @@ index 03ed244..3c85dba 100644
 +
  import android.Manifest;
  import android.app.AppOpsManager;
- import android.app.PendingIntent;
-@@ -61,6 +70,119 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
-     final protected AppOpsManager mAppOps;
+@@ -64,4 +73,117 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
      protected SMSDispatcher mDispatcher;
  
 +    // BEGIN privacy additions
@@ -2082,9 +2079,7 @@ index 03ed244..3c85dba 100644
 +
      protected Handler mHandler = new Handler() {
          @Override
-         public void handleMessage(Message msg) {
-@@ -164,6 +286,11 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
-         if (DBG) log("updateMessageOnIccEf: index=" + index +
+@@ -167,4 +289,9 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
                  " status=" + status + " ==> " +
                  "("+ Arrays.toString(pdu) + ")");
 +        // BEGIN privacy additions
@@ -2094,9 +2089,7 @@ index 03ed244..3c85dba 100644
 +        // END privacy
          enforceReceiveAndSend("Updating message on Icc");
          if (mAppOps.noteOp(AppOpsManager.OP_WRITE_ICC_SMS, Binder.getCallingUid(),
-                 callingPackage) != AppOpsManager.MODE_ALLOWED) {
-@@ -215,6 +342,11 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
-         if (DBG) log("copyMessageToIccEf: status=" + status + " ==> " +
+@@ -218,4 +345,9 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
                  "pdu=("+ Arrays.toString(pdu) +
                  "), smsc=(" + Arrays.toString(smsc) +")");
 +        // BEGIN privacy additions
@@ -2106,9 +2099,7 @@ index 03ed244..3c85dba 100644
 +        // END privacy
          enforceReceiveAndSend("Copying message to Icc");
          if (mAppOps.noteOp(AppOpsManager.OP_WRITE_ICC_SMS, Binder.getCallingUid(),
-                 callingPackage) != AppOpsManager.MODE_ALLOWED) {
-@@ -245,6 +377,12 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
-     public List<SmsRawData> getAllMessagesFromIccEf(String callingPackage) {
+@@ -248,4 +380,10 @@ public abstract class IccSmsInterfaceManager extends ISms.Stub {
          if (DBG) log("getAllMessagesFromEF");
  
 +        // BEGIN privacy
@@ -2119,13 +2110,11 @@ index 03ed244..3c85dba 100644
 +
          mContext.enforceCallingPermission(
                  Manifest.permission.RECEIVE_SMS,
-                 "Reading messages from Icc");
 diff --git a/src/java/com/android/internal/telephony/PhoneFactory.java b/src/java/com/android/internal/telephony/PhoneFactory.java
-index b7a2b77..61920b5 100644
+index fa5ef0d..83d555f 100644
 --- a/src/java/com/android/internal/telephony/PhoneFactory.java
 +++ b/src/java/com/android/internal/telephony/PhoneFactory.java
-@@ -16,16 +16,29 @@
- 
+@@ -17,4 +17,17 @@
  package com.android.internal.telephony;
  
 +//BEGIN PRIVACY ADDED
@@ -2143,8 +2132,7 @@ index b7a2b77..61920b5 100644
 +
  import android.content.Context;
  import android.net.LocalServerSocket;
- import android.os.Looper;
- import android.provider.Settings;
+@@ -24,8 +37,8 @@ import android.provider.Settings;
  import android.telephony.TelephonyManager;
  import android.telephony.Rlog;
 -import com.android.internal.telephony.cdma.CDMAPhone;
@@ -2156,9 +2144,7 @@ index b7a2b77..61920b5 100644
 +//import com.android.internal.telephony.gsm.GSMPhone;
  import com.android.internal.telephony.sip.SipPhone;
  import com.android.internal.telephony.sip.SipPhoneFactory;
- import com.android.internal.telephony.uicc.UiccController;
-@@ -143,20 +156,32 @@ public class PhoneFactory {
-                 int phoneType = TelephonyManager.getPhoneType(networkMode);
+@@ -144,18 +157,30 @@ public class PhoneFactory {
                  if (phoneType == PhoneConstants.PHONE_TYPE_GSM) {
                      Rlog.i(LOG_TAG, "Creating GSMPhone");
 -                    sProxyPhone = new PhoneProxy(new GSMPhone(context,
@@ -2195,9 +2181,7 @@ index b7a2b77..61920b5 100644
 +                            //END PRIVACY ADDED
                              break;
                      }
-                 }
-@@ -183,13 +208,19 @@ public class PhoneFactory {
-         synchronized(PhoneProxy.lockForRadioTechnologyChange) {
+@@ -184,5 +209,8 @@ public class PhoneFactory {
              switch (TelephonyManager.getLteOnCdmaModeStatic()) {
                  case PhoneConstants.LTE_ON_CDMA_TRUE: {
 -                    phone = new CDMALTEPhone(sContext, sCommandsInterface, sPhoneNotifier);
@@ -2207,7 +2191,7 @@ index b7a2b77..61920b5 100644
 +                    //END PRIVACY ADDED
                      break;
                  }
-                 case PhoneConstants.LTE_ON_CDMA_FALSE:
+@@ -190,5 +218,8 @@ public class PhoneFactory {
                  case PhoneConstants.LTE_ON_CDMA_UNKNOWN:
                  default: {
 -                    phone = new CDMAPhone(sContext, sCommandsInterface, sPhoneNotifier);
@@ -2217,22 +2201,18 @@ index b7a2b77..61920b5 100644
 +                    //END PRIVACY ADDED
                      break;
                  }
-             }
-@@ -199,7 +230,7 @@ public class PhoneFactory {
- 
+@@ -200,5 +231,5 @@ public class PhoneFactory {
      public static Phone getGsmPhone() {
          synchronized(PhoneProxy.lockForRadioTechnologyChange) {
 -            Phone phone = new GSMPhone(sContext, sCommandsInterface, sPhoneNotifier);
 +            Phone phone = new PrivacyGSMPhone(sContext, sCommandsInterface, sPhoneNotifier);
              return phone;
          }
-     }
 diff --git a/src/java/com/android/internal/telephony/SMSDispatcher.java b/src/java/com/android/internal/telephony/SMSDispatcher.java
-index b02e24b..0b4f2e0 100644
+index 631e99f..1fb9bae 100644
 --- a/src/java/com/android/internal/telephony/SMSDispatcher.java
 +++ b/src/java/com/android/internal/telephony/SMSDispatcher.java
-@@ -75,6 +75,13 @@ import java.util.concurrent.atomic.AtomicInteger;
- import java.util.HashMap;
+@@ -76,4 +76,11 @@ import java.util.HashMap;
  import java.util.Random;
  
 +// BEGIN PRIVACY ADDED
@@ -2244,9 +2224,7 @@ index b02e24b..0b4f2e0 100644
 +
  import static android.telephony.SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE;
  import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
- import static android.telephony.SmsManager.RESULT_ERROR_LIMIT_EXCEEDED;
-@@ -199,6 +206,123 @@ public abstract class SMSDispatcher extends Handler {
-         sConcatenatedRef += 1;
+@@ -201,4 +208,121 @@ public abstract class SMSDispatcher extends Handler {
          return sConcatenatedRef;
      }
 +    
@@ -2368,9 +2346,7 @@ index b02e24b..0b4f2e0 100644
 +    
  
      /**
-      * Create a new SMS dispatcher.
-@@ -221,7 +345,13 @@ public abstract class SMSDispatcher extends Handler {
-                 Settings.Global.SMS_SHORT_CODE_RULE), false, mSettingsObserver);
+@@ -223,5 +347,11 @@ public abstract class SMSDispatcher extends Handler {
  
          createWakelock();
 -
@@ -2383,9 +2359,7 @@ index b02e24b..0b4f2e0 100644
 +        
          mSmsCapable = mContext.getResources().getBoolean(
                  com.android.internal.R.bool.config_sms_capable);
-         mSmsReceiveDisabled = !SystemProperties.getBoolean(
-@@ -953,7 +1083,17 @@ public abstract class SMSDispatcher extends Handler {
-             }
+@@ -1011,5 +1141,15 @@ public abstract class SMSDispatcher extends Handler {
              return;
          }
 -
@@ -2402,26 +2376,22 @@ index b02e24b..0b4f2e0 100644
 +        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
          HashMap<String, Object> map = new HashMap<String, Object>();
          map.put("smsc", smsc);
-         map.put("pdu", pdu);
 diff --git a/src/java/com/android/internal/telephony/cdma/CDMAPhone.java b/src/java/com/android/internal/telephony/cdma/CDMAPhone.java
 index 0121fd0..5b0960c 100755
 --- a/src/java/com/android/internal/telephony/cdma/CDMAPhone.java
 +++ b/src/java/com/android/internal/telephony/cdma/CDMAPhone.java
-@@ -902,7 +902,7 @@ public class CDMAPhone extends PhoneBase {
-          super.notifyServiceStateChangedP(ss);
+@@ -903,5 +903,5 @@ public class CDMAPhone extends PhoneBase {
       }
  
 -     void notifyLocationChanged() {
 +     public void notifyLocationChanged() {
           mNotifier.notifyCellLocation(this);
       }
- 
 diff --git a/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java b/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
-index 93fba28..41905c7 100644
+index e656924..8744090 100644
 --- a/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
 +++ b/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
-@@ -65,6 +65,15 @@ import java.util.Date;
- import java.util.List;
+@@ -66,4 +66,13 @@ import java.util.List;
  import java.util.TimeZone;
  
 +/////////////////////////////////////////////////////////
@@ -2435,9 +2405,7 @@ index 93fba28..41905c7 100644
 +
  /**
   * {@hide}
-  */
-@@ -116,6 +125,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-     String mSavedTimeZone;
+@@ -120,4 +129,9 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
      long mSavedTime;
      long mSavedAtTime;
 +    
@@ -2447,9 +2415,7 @@ index 93fba28..41905c7 100644
 +    //-------------------------------------------------------------------------------------------------------------------------------------------------
  
      /** Wake lock used while setting time of day. */
-     private PowerManager.WakeLock mWakeLock;
-@@ -198,6 +212,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-             Settings.Global.getUriFor(Settings.Global.AUTO_TIME_ZONE), true,
+@@ -202,4 +216,9 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
              mAutoTimeZoneObserver);
          setSignalStrengthDefaultValues();
 +
@@ -2459,9 +2425,7 @@ index 93fba28..41905c7 100644
 +        //-------------------------------------------------------------------------------------------------------------------------------------------------
      }
  
-     @Override
-@@ -367,11 +386,22 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-                     }
+@@ -371,9 +390,20 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                  }
  
 -                mCellLoc.setCellLocationData(baseStationId, baseStationLatitude,
@@ -2487,17 +2451,13 @@ index 93fba28..41905c7 100644
 +             }
              // Release any temporary cell lock, which could have been
              // acquired to allow a single-shot location update.
-             disableSingleLocationUpdate();
-@@ -556,6 +586,7 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-     protected void handlePollStateResultMessage(int what, AsyncResult ar){
+@@ -560,4 +590,5 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
          int ints[];
          String states[];
 +  	PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
          switch (what) {
              case EVENT_POLL_STATE_GPRS: {
-                 states = (String[])ar.result;
-@@ -680,8 +711,19 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
- 
+@@ -684,6 +715,17 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
  
                  // Values are -1 if not available.
 -                mNewCellLoc.setCellLocationData(baseStationId, baseStationLatitude,
@@ -2517,9 +2477,7 @@ index 93fba28..41905c7 100644
 +             //END privacy
  
                  if (reasonForDenial == 0) {
-                     mRegistrationDeniedReason = ServiceStateTracker.REGISTRATION_DENIED_GEN;
-@@ -712,14 +754,25 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-                                     "'= " + opNames[2]);
+@@ -716,12 +758,23 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                          }
                      }
 -
@@ -2546,9 +2504,7 @@ index 93fba28..41905c7 100644
 +                    // END privacy
                  } else {
                      if (DBG) log("EVENT_POLL_STATE_OPERATOR_CDMA: error parsing opNames");
-                 }
-@@ -1030,13 +1083,27 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-             if ((mCi.getRadioState().isOn()) && (!mIsSubscriptionFromRuim)) {
+@@ -1034,11 +1087,25 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                  String eriText;
                  // Now the CDMAPhone sees the new ServiceState so it can get the new ERI text
 -                if (mSS.getVoiceRegState() == ServiceState.STATE_IN_SERVICE) {
@@ -2581,35 +2537,29 @@ index 93fba28..41905c7 100644
 +                    }
                  }
                  mSS.setOperatorAlphaLong(eriText);
-             }
 diff --git a/src/java/com/android/internal/telephony/gsm/GSMPhone.java b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
-index 4b7995c..d21e7ff 100644
+index b54cd7f..61f04f5 100644
 --- a/src/java/com/android/internal/telephony/gsm/GSMPhone.java
 +++ b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
-@@ -361,7 +361,7 @@ public class GSMPhone extends PhoneBase {
-      * Notify any interested party of a Phone state change
+@@ -364,5 +364,5 @@ public class GSMPhone extends PhoneBase {
       * {@link com.android.internal.telephony.PhoneConstants.State}
       */
 -    /*package*/ void notifyPhoneStateChanged() {
 +    /*package*/ public void notifyPhoneStateChanged() {
          mNotifier.notifyPhoneState(this);
      }
- 
-@@ -400,7 +400,7 @@ public class GSMPhone extends PhoneBase {
-     }
+@@ -403,5 +403,5 @@ public class GSMPhone extends PhoneBase {
  
      /*package*/
 -    void notifyLocationChanged() {
 +    public void notifyLocationChanged() {
          mNotifier.notifyCellLocation(this);
      }
- 
 diff --git a/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java b/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
-index acb4972..0054967 100644
+index 7419ee8..e020322 100644
 --- a/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
 +++ b/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
-@@ -79,6 +79,14 @@ import java.util.Date;
- import java.util.List;
+@@ -80,4 +80,12 @@ import java.util.List;
  import java.util.TimeZone;
  
 +//////////////////////////////////////////////////////////
@@ -2622,9 +2572,7 @@ index acb4972..0054967 100644
 +
  /**
   * {@hide}
-  */
-@@ -91,6 +99,11 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-     GsmCellLocation mNewCellLoc;
+@@ -92,4 +100,9 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
      int mPreferredNetworkType;
  
 +    // BEGIN privacy additions
@@ -2634,9 +2582,7 @@ index acb4972..0054967 100644
 +
      private int mMaxDataCalls = 1;
      private int mNewMaxDataCalls = 1;
-     private int mReasonDataDenied = -1;
-@@ -229,7 +242,13 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-         IntentFilter filter = new IntentFilter();
+@@ -230,5 +243,11 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
          filter.addAction(Intent.ACTION_LOCALE_CHANGED);
          phone.getContext().registerReceiver(mIntentReceiver, filter);
 -
@@ -2649,9 +2595,7 @@ index acb4972..0054967 100644
 +        
          // Gsm doesn't support OTASP so its not needed
          phone.notifyOtaspChanged(OTASP_NOT_NEEDED);
-     }
-@@ -339,8 +358,23 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-                             Rlog.w(LOG_TAG, "error parsing location: " + ex);
+@@ -340,6 +359,21 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                          }
                      }
 -                    mCellLoc.setLacAndCid(lac, cid);
@@ -2675,17 +2619,13 @@ index acb4972..0054967 100644
 +                     // END privacy
                  }
  
-                 // Release any temporary cell lock, which could have been
-@@ -603,6 +637,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-                         ar.exception);
+@@ -604,4 +638,5 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
              }
          } else try {
 +        	PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
              switch (what) {
                  case EVENT_POLL_STATE_REGISTRATION: {
-                     states = (String[])ar.result;
-@@ -655,8 +690,22 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-                     }
+@@ -656,6 +691,20 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
  
                      // LAC and CID are -1 if not avail
 -                    mNewCellLoc.setLacAndCid(lac, cid);
@@ -2708,9 +2648,7 @@ index acb4972..0054967 100644
 +                    // END privacy
                      break;
                  }
- 
-@@ -702,7 +751,14 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-                     String opNames[] = (String[])ar.result;
+@@ -703,5 +752,12 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
  
                      if (opNames != null && opNames.length >= 3) {
 -                         mNewSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
@@ -2724,35 +2662,29 @@ index acb4972..0054967 100644
 +                        // END privacy
                      }
                      break;
-                 }
-@@ -1067,7 +1123,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
-         }
+@@ -1068,5 +1124,5 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
  
          if (hasLocationChanged) {
 -            mPhone.notifyLocationChanged();
 +            mPhone.notifyLocationChanged(); //we can notify, because all sensitive data has changed before @author CollegeDev
          }
  
-         if (! isGprsConsistent(mSS.getDataRegState(), mSS.getVoiceRegState())) {
 diff --git a/src/java/com/android/internal/telephony/sip/SipPhone.java b/src/java/com/android/internal/telephony/sip/SipPhone.java
 index 878fe3f..34f8afd 100644
 --- a/src/java/com/android/internal/telephony/sip/SipPhone.java
 +++ b/src/java/com/android/internal/telephony/sip/SipPhone.java
-@@ -62,7 +62,7 @@ public class SipPhone extends SipPhoneBase {
-     private SipManager mSipManager;
+@@ -63,5 +63,5 @@ public class SipPhone extends SipPhoneBase {
      private SipProfile mProfile;
  
 -    SipPhone (Context context, PhoneNotifier notifier, SipProfile profile) {
 +    public SipPhone (Context context, PhoneNotifier notifier, SipProfile profile) {
          super("SIP:" + profile.getUriString(), context, notifier);
  
-         if (DBG) log("new SipPhone: " + profile.getUriString());
 diff --git a/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java b/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java
 index 3383bed..ca4559b 100644
 --- a/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java
 +++ b/src/java/com/android/internal/telephony/sip/SipPhoneFactory.java
-@@ -16,6 +16,10 @@
- 
+@@ -17,4 +17,8 @@
  package com.android.internal.telephony.sip;
  
 +// BEGIN privacy additions
@@ -2761,13 +2693,10 @@ index 3383bed..ca4559b 100644
 +
  import com.android.internal.telephony.PhoneNotifier;
  
- import android.content.Context;
-@@ -40,7 +44,7 @@ public class SipPhoneFactory {
-             PhoneNotifier phoneNotifier) {
+@@ -41,5 +45,5 @@ public class SipPhoneFactory {
          try {
              SipProfile profile = new SipProfile.Builder(sipUri).build();
 -            return new SipPhone(context, phoneNotifier, profile);
 +            return new PrivacySipPhone(context, phoneNotifier, profile);
          } catch (ParseException e) {
              Rlog.w("SipPhoneFactory", "makePhone", e);
-             return null;
