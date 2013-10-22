@@ -2,7 +2,9 @@ diff --git a/Android.mk b/Android.mk
 index 151621c..d395346 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -57,6 +57,7 @@ LOCAL_SRC_FILES := $(filter-out \
+--- a/Android.mk
++++ b/Android.mk
+@@ -55,6 +55,7 @@ LOCAL_SRC_FILES := $(filter-out \
  ## across process boundaries.
  ##
  ## READ ME: ########################################################
@@ -10,23 +12,23 @@ index 151621c..d395346 100644
  LOCAL_SRC_FILES += \
  	core/java/android/accessibilityservice/IAccessibilityServiceConnection.aidl \
  	core/java/android/accessibilityservice/IAccessibilityServiceClient.aidl \
-@@ -227,6 +228,7 @@ LOCAL_SRC_FILES += \
+@@ -236,6 +237,7 @@ LOCAL_SRC_FILES += \
  	media/java/android/media/IRemoteControlDisplay.aidl \
  	media/java/android/media/IRemoteVolumeObserver.aidl \
  	media/java/android/media/IRingtonePlayer.aidl \
-+	privacy/java/android/privacy/IPrivacySettingsManager.aidl \
++     privacy/java/android/privacy/IPrivacySettingsManager.aidl \
  	telephony/java/com/android/internal/telephony/IPhoneStateListener.aidl \
  	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
- 	telephony/java/com/android/internal/telephony/ITelephony.aidl \
-@@ -236,6 +238,7 @@ LOCAL_SRC_FILES += \
- 	wifi/java/android/net/wifi/IWifiManager.aidl \
- 	wifi/java/android/net/wifi/p2p/IWifiP2pManager.aidl
+ 	telephony/java/com/android/internal/telephony/msim/IPhoneSubInfoMSim.aidl \
+@@ -262,6 +264,7 @@ LOCAL_SRC_FILES += \
+ 	fmradio/java/com/stericsson/hardware/fm/IOnExtraCommandListener.aidl \
+ 	fmradio/java/com/stericsson/hardware/fm/IOnAutomaticSwitchListener.aidl
  #
 +# END privacy-added: IPrivacySettingsManager.aidl
  
  
  # FRAMEWORKS_BASE_JAVA_SRC_DIRS comes from build/core/pathmap.mk
-@@ -275,6 +278,7 @@ framework_built := $(call java-lib-deps,framework)
+@@ -301,6 +304,7 @@ framework_built := $(call java-lib-deps,framework)
  # AIDL files to be preprocessed and included in the SDK,
  # relative to the root of the build tree.
  # ============================================================
@@ -34,21 +36,15 @@ index 151621c..d395346 100644
  aidl_files := \
  	frameworks/base/core/java/android/accounts/IAccountManager.aidl \
  	frameworks/base/core/java/android/accounts/IAccountManagerResponse.aidl \
-@@ -325,11 +329,14 @@ aidl_files := \
+@@ -353,6 +357,7 @@ aidl_files := \
  	frameworks/base/location/java/android/location/LocationRequest.aidl \
  	frameworks/base/location/java/com/android/internal/location/ProviderProperties.aidl \
  	frameworks/base/location/java/com/android/internal/location/ProviderRequest.aidl \
-+        frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl \
++     frameworks/base/privacy/java/android/privacy/PrivacySettings.aidl \
  	frameworks/base/telephony/java/android/telephony/ServiceState.aidl \
  	frameworks/base/telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
- 	frameworks/base/telephony/java/com/android/internal/telephony/ITelephony.aidl \
- 
- gen := $(TARGET_OUT_COMMON_INTERMEDIATES)/framework.aidl
-+# END privacy-added: PrivacySettings.aidl
-+
- $(gen): PRIVATE_SRC_FILES := $(aidl_files)
- ALL_SDK_FILES += $(gen)
- $(gen): $(aidl_files) | $(AIDL)
+ 	frameworks/base/telephony/java/com/android/internal/telephony/msim/IPhoneSubInfoMSim.aidl \
+
 diff --git a/api/current.txt b/api/current.txt
 index 02b95a0..9f81110 100644
 --- a/api/current.txt
@@ -8946,7 +8942,7 @@ diff --git a/telephony/java/android/telephony/PhoneStateListener.java b/telephon
 index ff77fc0..f31f990 100644
 --- a/telephony/java/android/telephony/PhoneStateListener.java
 +++ b/telephony/java/android/telephony/PhoneStateListener.java
-@@ -16,16 +16,23 @@
+@@ -19,17 +19,24 @@
  
  package android.telephony;
  
@@ -8968,6 +8964,7 @@ index ff77fc0..f31f990 100644
 +//import android.telephony.CellLocation;
  import android.telephony.CellInfo;
  import android.telephony.Rlog;
+ import android.telephony.MSimTelephonyManager;
  
 -import com.android.internal.telephony.IPhoneStateListener;
 +//import com.android.internal.telephony.IPhoneStateListener;
