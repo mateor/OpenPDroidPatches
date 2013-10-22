@@ -2359,21 +2359,26 @@ index 631e99f..1fb9bae 100644
 +        
          mSmsCapable = mContext.getResources().getBoolean(
                  com.android.internal.R.bool.config_sms_capable);
-@@ -1011,5 +1141,15 @@ public abstract class SMSDispatcher extends Handler {
+@@ -1265,6 +1254,18 @@ public abstract class SMSDispatcher extends Handler {
              return;
          }
--
-+        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
+ 
++        // BEGIN Privacy
 +        if(!isAllowed(getPackageName(), ACCESS_TYPE_SMS_MMS)){
-+        	if (sentIntent != null) {
++                if (sentIntent != null) {
 +                try {
 +                    sentIntent.send(RESULT_ERROR_GENERIC_FAILURE);
 +                    Rlog.i(TAG,"fake also delivery state to radio off!");
 +                } catch (CanceledException e) {}
 +            }
-+        	return;
++                return;
 +        }
-+        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        // END privacy
++
+         // Get calling app package name via UID from Binder call
+         PackageManager pm = mContext.getPackageManager();
+         String[] packageNames = pm.getPackagesForUid(Binder.getCallingUid());
+
          HashMap<String, Object> map = new HashMap<String, Object>();
          map.put("smsc", smsc);
 diff --git a/src/java/com/android/internal/telephony/cdma/CDMAPhone.java b/src/java/com/android/internal/telephony/cdma/CDMAPhone.java
