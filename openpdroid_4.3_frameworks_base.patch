@@ -8181,7 +8181,7 @@ new file mode 100644
 index 0000000..7e7d457
 --- /dev/null
 +++ b/services/java/com/android/server/PrivacyTelephonyRegistry.java
-@@ -0,0 +1,402 @@
+@@ -0,0 +1,414 @@
 +package com.android.server;
 +
 +import com.android.internal.telephony.IPhoneStateListener;
@@ -8228,18 +8228,26 @@ index 0000000..7e7d457
 +	private static final int PERMISSION_CALL_STATE = 3;
 +	
 +	private static final int PERMISSION_SERVICE_STATE = 4;
++
++    private Context _context;
 +	
 +	public PrivacyTelephonyRegistry(Context context) {
 +		super(context);
-+		pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
-+		try{
-+			registerPrivacy();
-+		} catch(Exception e){
-+			Log.e(P_TAG,"failed to register privacy broadcastreceiver");
-+		}
++         this._context = context;
 +		Log.i(P_TAG,"constructor ready");
 +	}
 +	
++    private void initialize() {
++        if(ServiceManager.getService("privacy") != null) {
++            pSetMan = new PrivacySettingsManager(_context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
++            try{
++                registerPrivacy();
++            } catch(Exception e){
++                Log.e(P_TAG,"failed to register privacy broadcastreceiver");
++            }
++        }
++    }
++
 +	/** This broadCastReceiver receives the privacy intent for blocking phonecalls and faking phonestate */
 +	private final BroadcastReceiver privacyReceiver = new BroadcastReceiver()
 +    {
@@ -8439,6 +8447,10 @@ index 0000000..7e7d457
 +	
 +	
 +	private boolean isPackageAllowed(int PERMISSION, String packageName){
++         if(pSetMan == null) {
++             initialize();
++             if(pSetMan == null) return false;
++         }
 +		PrivacySettings settings = pSetMan.getSettings(packageName, Process.myUid());
 +		if(settings == null) return false;
 +		switch(PERMISSION){
