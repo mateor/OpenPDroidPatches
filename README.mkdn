@@ -1,26 +1,22 @@
-OpenPdroid v1.0.1 for Android 4.2.1 and 4.2.2
-===============================
+## OpenPdroid v1.0.1 for Android 4.3
 
 
-These are the current build patches for Android 4.2 and should generally reflect the
-current state
- of the _jb-mr1-release-openpdroid_ branch.
+These are the current build patches for Android 4.3 and should generally reflect the
+current state of the _jb-mr2-release-openpdroid_ branch.
 The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
 
-We realize that the patch/branch situation is not perfect, it is work in progress.
+There are ```apply``` and ```remove``` patch scripts available that I use personally over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
 
 __These build patches should work for most roms. As of their creation (1/17/13) they applied cleanly to AOKP, AOSP, Cyanogenmod, ParanoidAndroid and others.__
 
-The current best advice as to how to apply/remove them is below. Some easier application
-methods are being discussed.
 
 To Apply
 --------------
-	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2_build.patch
-	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2_libcore.patch
-	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2_packages_apps_Mms.patch
-	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2_frameworks_base.patch
-	cd ~/android/system/frameworks/opt/telephony; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.2_frameworks_opt_telephony.patch
+	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.3_build.patch
+	cd ~/android/system/libcore; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.3_libcore.patch
+	cd ~/android/system/packages/apps/Mms; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.3_packages_apps_Mms.patch
+	cd ~/android/system/frameworks/base; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.3_frameworks_base.patch
+	cd ~/android/system/frameworks/opt/telephony; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.3_frameworks_opt_telephony.patch
 	cd ~/android/system; . build/envsetup.sh; brunch <DEVICE_TARGET>
 
 
