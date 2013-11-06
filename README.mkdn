@@ -11,6 +11,8 @@ These are meant to be used with __Svyat's original [PDroid app](http://forum.xda
 
 __If you are interested in the history of the PDroid framework__, I managed to 'rescue' (to my mind) the original project history, and [svyat's original commit history for PDroid patches 1.2-1.32 can be seen here](https://github.com/OpenPDroid/PDroidHistory).
 
+There are ```apply``` and ```remove``` patch scripts available that I use personally over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
+
 To Apply
 --------------
 
