@@ -1,5 +1,4 @@
-OpenPdroid for Android 4.1.2 (Cyanogen10/Custom Version)
-===============================
+## OpenPdroid for Android 4.1.2 (Cyanogen10/Custom ROMs)
 
 
 These are the current build patches for Cyanogen10 (and most other Android 4.1.2 custom roms, e.g. AOKP) and should generally reflect the current state of the ```cm-jellybean-openpdroid``` branch.
@@ -7,9 +6,10 @@ The latest commits are not always reflected in the build patches, bleeding-edge 
 
 Due to a restriction in the dalvik code, AOSP vs. most custom roms require different patches. **The general rule for Android 4.1.*, is if the rom already comes with a framework2.jar, then use the ```4.1.2-cm``` patches.** 
 
-We realize that the patch/branch situation is not perfect, it is work in progress.
+There are ```apply``` and ```remove``` patch scripts available that I use personally over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
 
-The current best advice as to how to apply/remove them is below. Some easier application methods are being discussed.
+__These build patches should work for most roms. As of their creation (1/17/13) they applied cleanly to AOKP, AOSP, Cyanogenmod, ParanoidAndroid and others.__
+
 
 To Apply
 --------------
