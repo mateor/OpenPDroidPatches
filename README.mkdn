@@ -23,7 +23,7 @@ To Apply
 
 
 To Remove
---------------
+--------------git 
 
      cd ~/android/system; rm -rf out/target/common/obj/JAVA_LIBRARIES/framework_intermediates out/host/common/obj/JAVA_LIBRARIES/layoutlib_intermediates  out/target/common/obj/APPS/services_intermediates out/target/common/obj/APPS/core_intermediates
 
