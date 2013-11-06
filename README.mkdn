@@ -8,6 +8,8 @@ These are meant to be used with __Svyat's original [PDroid app](http://forum.xda
 
 Builds with these patches __will not work__ with the PDroid2.0 or PDroidManager apps, which are both 4.1.2+.
 
+There are ```apply``` and ```remove``` patch scripts available that I use personally over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
+
 To Apply
 --------------
 	cd ~/android/system/build; git checkout -b openpdroid; patch -p1 < ~/openpdroid_4.0.4-aosp_build.patch
