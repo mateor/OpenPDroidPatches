@@ -25,11 +25,10 @@ index b6c878c..7c1ac7b 100644
  public class HttpUtils {
      private static final String TAG = LogTag.TRANSACTION;
  
-@@ -62,7 +78,55 @@ public class HttpUtils {
-     // setting, this should no longer be static.  We should call
+@@ -63,6 +79,54 @@ public class HttpUtils {
      // getHttpAcceptLanguage instead.
      private static final String HDR_VALUE_ACCEPT_LANGUAGE;
-+    
+     
 +    
 +    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------
 +    private static PrivacySettingsManager pSetMan;
@@ -75,18 +74,16 @@ index b6c878c..7c1ac7b 100644
 +    
 +    
 +    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------
- 
++
 +    
 +    
      static {
          HDR_VALUE_ACCEPT_LANGUAGE = getCurrentAcceptLanguage(Locale.getDefault());
      }
-@@ -113,7 +177,30 @@ public class HttpUtils {
-         }
+@@ -114,6 +178,29 @@ public class HttpUtils {
  
          AndroidHttpClient client = null;
--
-+        
+         
 +        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
 +    	if(pSetMan == null) pSetMan = new PrivacySettingsManager(context, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
 +    	final List<APNInfo> apn = getAPN(context);
