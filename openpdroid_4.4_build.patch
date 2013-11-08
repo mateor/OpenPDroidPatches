@@ -1,8 +1,8 @@
 diff --git a/core/pathmap.mk b/core/pathmap.mk
-index 5dfc543..6b24803 100644
+index fd0f5a4..d1bbd45 100644
 --- a/core/pathmap.mk
 +++ b/core/pathmap.mk
-@@ -86,6 +86,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
+@@ -91,6 +91,7 @@ FRAMEWORKS_BASE_SUBDIRS := \
  	    media/mca/filterpacks \
  	    drm \
  	    opengl \

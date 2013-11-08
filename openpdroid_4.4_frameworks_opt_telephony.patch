@@ -2121,7 +2121,7 @@ index 88fbfc9..82fc87c 100644
       */
      @Override
 diff --git a/src/java/com/android/internal/telephony/PhoneFactory.java b/src/java/com/android/internal/telephony/PhoneFactory.java
-index b9a6975..9bbb38a 100644
+index 20a70df..b57f98e 100644
 --- a/src/java/com/android/internal/telephony/PhoneFactory.java
 +++ b/src/java/com/android/internal/telephony/PhoneFactory.java
 @@ -16,6 +16,19 @@
@@ -2144,7 +2144,7 @@ index b9a6975..9bbb38a 100644
  import android.content.ComponentName;
  import android.content.Context;
  import android.net.LocalServerSocket;
-@@ -24,10 +37,10 @@ import android.provider.Settings;
+@@ -25,10 +38,10 @@ import android.provider.Settings;
  import android.telephony.Rlog;
  import android.telephony.TelephonyManager;
  
@@ -2158,7 +2158,7 @@ index b9a6975..9bbb38a 100644
  import com.android.internal.telephony.sip.SipPhone;
  import com.android.internal.telephony.sip.SipPhoneFactory;
  import com.android.internal.telephony.uicc.UiccController;
-@@ -119,20 +132,32 @@ public class PhoneFactory {
+@@ -138,20 +151,32 @@ public class PhoneFactory {
                  int phoneType = TelephonyManager.getPhoneType(networkMode);
                  if (phoneType == PhoneConstants.PHONE_TYPE_GSM) {
                      Rlog.i(LOG_TAG, "Creating GSMPhone");
@@ -2197,7 +2197,7 @@ index b9a6975..9bbb38a 100644
                              break;
                      }
                  }
-@@ -169,13 +194,19 @@ public class PhoneFactory {
+@@ -188,13 +213,19 @@ public class PhoneFactory {
          synchronized(PhoneProxy.lockForRadioTechnologyChange) {
              switch (TelephonyManager.getLteOnCdmaModeStatic()) {
                  case PhoneConstants.LTE_ON_CDMA_TRUE: {
@@ -2219,7 +2219,7 @@ index b9a6975..9bbb38a 100644
                      break;
                  }
              }
-@@ -185,7 +216,7 @@ public class PhoneFactory {
+@@ -204,7 +235,7 @@ public class PhoneFactory {
  
      public static Phone getGsmPhone() {
          synchronized(PhoneProxy.lockForRadioTechnologyChange) {
@@ -2229,7 +2229,7 @@ index b9a6975..9bbb38a 100644
          }
      }
 diff --git a/src/java/com/android/internal/telephony/SMSDispatcher.java b/src/java/com/android/internal/telephony/SMSDispatcher.java
-index b760d37..8021db8 100644
+index 63821a1..3b52812 100644
 --- a/src/java/com/android/internal/telephony/SMSDispatcher.java
 +++ b/src/java/com/android/internal/telephony/SMSDispatcher.java
 @@ -65,6 +65,13 @@ import java.util.HashMap;
@@ -2247,9 +2247,10 @@ index b760d37..8021db8 100644
  import static android.telephony.SmsManager.RESULT_ERROR_GENERIC_FAILURE;
  import static android.telephony.SmsManager.RESULT_ERROR_LIMIT_EXCEEDED;
 @@ -165,6 +172,123 @@ public abstract class SMSDispatcher extends Handler {
+         sConcatenatedRef += 1;
          return sConcatenatedRef;
      }
-     
++    
 +    
 +    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
 +    
@@ -2366,23 +2367,25 @@ index b760d37..8021db8 100644
 +    
 +    //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
 +    
-+
+ 
      /**
       * Create a new SMS dispatcher.
-      * @param phone the Phone to use
-@@ -181,6 +305,11 @@ public abstract class SMSDispatcher extends Handler {
-         mContext.getContentResolver().registerContentObserver(Settings.Global.getUriFor(
-                 Settings.Global.SMS_SHORT_CODE_RULE), false, mSettingsObserver);
- 
-+        // BEGIN privacy
-+        // ---------------------------------------------------------------
+@@ -190,7 +314,13 @@ public abstract class SMSDispatcher extends Handler {
+         Rlog.d(TAG, "SMSDispatcher: ctor mSmsCapable=" + mSmsCapable + " format=" + getFormat()
+                 + " mSmsSendDisabled=" + mSmsSendDisabled);
+     }
+-
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
 +        if(pSetMan == null) new PrivacySettingsManager(null, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
-+        // END privacy
-+
-         mSmsCapable = mContext.getResources().getBoolean(
-                 com.android.internal.R.bool.config_sms_capable);
-         mSmsSendDisabled = !SystemProperties.getBoolean(
-@@ -657,6 +786,18 @@ public abstract class SMSDispatcher extends Handler {
++        
++        //-------------------------------------------------------------++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------
++        
+     /**
+      * Observe the secure setting for updated premium sms determination rules
+      */
+@@ -714,6 +844,18 @@ public abstract class SMSDispatcher extends Handler {
              return;
          }
  
@@ -2417,7 +2420,7 @@ index 38524df..38d332d
       }
  
 diff --git a/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java b/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
-index 7ad0757..b4096fb 100644
+index 4bacac8..60c6f20 100644
 --- a/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
 +++ b/src/java/com/android/internal/telephony/cdma/CdmaServiceStateTracker.java
 @@ -65,6 +65,15 @@ import java.util.Date;
@@ -2436,19 +2439,19 @@ index 7ad0757..b4096fb 100644
  /**
   * {@hide}
   */
-@@ -117,6 +126,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -119,6 +128,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+     String mSavedTimeZone;
      long mSavedTime;
      long mSavedAtTime;
-     
++    
 +    //-------------------------------------------------------------------------------------------------------------------------------------------------
 +    private Context mContext;
 +    private PrivacySettingsManager pSetMan;
 +    //-------------------------------------------------------------------------------------------------------------------------------------------------
-+
+ 
      /** Wake lock used while setting time of day. */
      private PowerManager.WakeLock mWakeLock;
-     private static final String WAKELOCK_TAG = "ServiceStateTracker";
-@@ -198,6 +212,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -201,6 +215,11 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
              Settings.Global.getUriFor(Settings.Global.AUTO_TIME_ZONE), true,
              mAutoTimeZoneObserver);
          setSignalStrengthDefaultValues();
@@ -2460,12 +2463,15 @@ index 7ad0757..b4096fb 100644
      }
  
      @Override
-@@ -371,11 +390,22 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -374,11 +393,22 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                      }
                  }
  
 -                mCellLoc.setCellLocationData(baseStationId, baseStationLatitude,
 -                        baseStationLongitude, systemId, networkId);
+-                mPhone.notifyLocationChanged();
+-            }
+-
 +                // BEGIN privacy additions
 +                PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
 +                if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
@@ -2479,14 +2485,13 @@ index 7ad0757..b4096fb 100644
 +                else{
 +                	mCellLoc.setCellLocationData(baseStationId, baseStationLatitude, baseStationLongitude, systemId, networkId);
 +                }
-                  mPhone.notifyLocationChanged();
++                 mPhone.notifyLocationChanged();
 +                // END privacy
-              }
--
++             }
              // Release any temporary cell lock, which could have been
              // acquired to allow a single-shot location update.
              disableSingleLocationUpdate();
-@@ -562,6 +592,7 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -565,6 +595,7 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
      protected void handlePollStateResultMessage(int what, AsyncResult ar){
          int ints[];
          String states[];
@@ -2494,7 +2499,7 @@ index 7ad0757..b4096fb 100644
          switch (what) {
              case EVENT_POLL_STATE_GPRS: {
                  states = (String[])ar.result;
-@@ -686,8 +717,19 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -689,8 +720,19 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
  
  
                  // Values are -1 if not available.
@@ -2516,7 +2521,7 @@ index 7ad0757..b4096fb 100644
  
                  if (reasonForDenial == 0) {
                      mRegistrationDeniedReason = ServiceStateTracker.REGISTRATION_DENIED_GEN;
-@@ -718,14 +760,25 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -721,14 +763,25 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                                      "'= " + opNames[2]);
                          }
                      }
@@ -2525,28 +2530,37 @@ index 7ad0757..b4096fb 100644
                      if (!mIsSubscriptionFromRuim) {
                          // In CDMA in case on NV, the ss.mOperatorAlphaLong is set later with the
                          // ERI text, so here it is ignored what is coming from the modem.
+-                        mNewSS.setOperatorName(null, opNames[1], opNames[2]);
 +                        if(pSetMan != null && settings != null 
 +                                && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
 +                            mNewSS.setOperatorName(null, "", "");
 +                        } else {
-                             mNewSS.setOperatorName(null, opNames[1], opNames[2]);
++                            mNewSS.setOperatorName(null, opNames[1], opNames[2]);
 +                        }
-+                    } else {
+                     } else {
+-                        mNewSS.setOperatorName(opNames[0], opNames[1], opNames[2]);
 +                        if(pSetMan != null && settings != null
 +                                && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
 +                            mNewSS.setOperatorName("", "", "");
-                         } else {
-                             mNewSS.setOperatorName(opNames[0], opNames[1], opNames[2]);
-                         }
-+                    }
++                        } else {
++                            mNewSS.setOperatorName(opNames[0], opNames[1], opNames[2]);
++                        }
+                     }
 +                    // END privacy
                  } else {
                      if (DBG) log("EVENT_POLL_STATE_OPERATOR_CDMA: error parsing opNames");
                  }
-@@ -1050,6 +1103,19 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
+@@ -1053,13 +1106,27 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
              if ((mCi.getRadioState().isOn()) && (!mIsSubscriptionFromRuim)) {
                  String eriText;
                  // Now the CDMAPhone sees the new ServiceState so it can get the new ERI text
+-                if (mSS.getVoiceRegState() == ServiceState.STATE_IN_SERVICE) {
+-                    eriText = mPhone.getCdmaEriText();
+-                } else {
+-                    // Note that ServiceState.STATE_OUT_OF_SERVICE is valid used for
+-                    // mRegistrationState 0,2,3 and 4
+-                    eriText = mPhone.getContext().getText(
+-                            com.android.internal.R.string.roamingTextSearching).toString();
 +                // BEGIN privacy additions
 +                PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
 +                if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
@@ -2560,22 +2574,22 @@ index 7ad0757..b4096fb 100644
 +                    }
 +                } else{
 +                    //original code
-                     if (mSS.getVoiceRegState() == ServiceState.STATE_IN_SERVICE) {
-                         eriText = mPhone.getCdmaEriText();
-                     } else {
-@@ -1058,6 +1124,7 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
-                         eriText = mPhone.getContext().getText(
-                                 com.android.internal.R.string.roamingTextSearching).toString();
-                     }
-+                }
++                    if (mSS.getVoiceRegState() == ServiceState.STATE_IN_SERVICE) {
++                        eriText = mPhone.getCdmaEriText();
++                    } else {
++                        // Note that ServiceState.STATE_OUT_OF_SERVICE is valid used for
++                        // mRegistrationState 0,2,3 and 4
++                        eriText = mPhone.getContext().getText(
++                                com.android.internal.R.string.roamingTextSearching).toString();
++                    }
+                 }
                  mSS.setOperatorAlphaLong(eriText);
              }
- 
 diff --git a/src/java/com/android/internal/telephony/gsm/GSMPhone.java b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
-index a7991ef..da529e7 100644
+index 1f45641..186f66d 100644
 --- a/src/java/com/android/internal/telephony/gsm/GSMPhone.java
 +++ b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
-@@ -372,7 +372,7 @@ public class GSMPhone extends PhoneBase {
+@@ -374,7 +374,7 @@ public class GSMPhone extends PhoneBase {
       * Notify any interested party of a Phone state change
       * {@link com.android.internal.telephony.PhoneConstants.State}
       */
@@ -2584,7 +2598,7 @@ index a7991ef..da529e7 100644
          mNotifier.notifyPhoneState(this);
      }
  
-@@ -411,7 +411,7 @@ public class GSMPhone extends PhoneBase {
+@@ -413,7 +413,7 @@ public class GSMPhone extends PhoneBase {
      }
  
      /*package*/
@@ -2594,7 +2608,7 @@ index a7991ef..da529e7 100644
      }
  
 diff --git a/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java b/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
-index 5884aeb..3608a27 100644
+index a0bf664..1e435f1 100644
 --- a/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
 +++ b/src/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
 @@ -79,6 +79,14 @@ import java.util.Date;
@@ -2624,10 +2638,12 @@ index 5884aeb..3608a27 100644
      private int mMaxDataCalls = 1;
      private int mNewMaxDataCalls = 1;
      private int mReasonDataDenied = -1;
-@@ -236,6 +249,12 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+@@ -235,7 +248,13 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+         IntentFilter filter = new IntentFilter();
          filter.addAction(Intent.ACTION_LOCALE_CHANGED);
          phone.getContext().registerReceiver(mIntentReceiver, filter);
-         
+-
++        
 +        //--------------------------------------------------------------------------
 +        this.mContext = phone.getContext();
 +        pSetMan = new PrivacySettingsManager(mContext, IPrivacySettingsManager.Stub.asInterface(ServiceManager.getService("privacy")));
@@ -2637,10 +2653,12 @@ index 5884aeb..3608a27 100644
          // Gsm doesn't support OTASP so its not needed
          phone.notifyOtaspChanged(OTASP_NOT_NEEDED);
      }
-@@ -347,9 +366,24 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+@@ -347,8 +366,23 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                              Rlog.w(LOG_TAG, "error parsing location: " + ex);
                          }
                      }
+-                    mCellLoc.setLacAndCid(lac, cid);
+-                    mPhone.notifyLocationChanged();
 +                    // BEGIN privacy additions
 +                    PrivacySettings settings = pSetMan.getSettings(mContext.getPackageName(), 0);
 +                    if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
@@ -2654,14 +2672,13 @@ index 5884aeb..3608a27 100644
 +                        mPhone.notifyLocationChanged();
 +                    }
 +                    else{
-                     	mCellLoc.setLacAndCid(lac, cid);
-                         mPhone.notifyLocationChanged();
-                     }
++                    	mCellLoc.setLacAndCid(lac, cid);
++                        mPhone.notifyLocationChanged();
++                    }
 +                     // END privacy
-+                }
+                 }
  
                  // Release any temporary cell lock, which could have been
-                 // acquired to allow a single-shot location update.
 @@ -614,6 +648,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                          ar.exception);
              }
@@ -2674,6 +2691,8 @@ index 5884aeb..3608a27 100644
                      }
  
                      // LAC and CID are -1 if not avail
+-                    mNewCellLoc.setLacAndCid(lac, cid);
+-                    mNewCellLoc.setPsc(psc);
 +                    // BEGIN privacy additions
 +                    if(pSetMan != null && settings != null && settings.getLocationNetworkSetting() == PrivacySettings.EMPTY){
 +                    	//we will update with invalid cell location values
@@ -2686,29 +2705,29 @@ index 5884aeb..3608a27 100644
 +                        mNewCellLoc.setPsc(psc);
 +                    }
 +                    else{
-                     	mNewCellLoc.setLacAndCid(lac, cid);
-                         mNewCellLoc.setPsc(psc);
++                    	mNewCellLoc.setLacAndCid(lac, cid);
++                        mNewCellLoc.setPsc(psc);
 +                    }
 +                    // END privacy
                      break;
                  }
  
-@@ -713,8 +762,15 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
+@@ -713,7 +762,14 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                      String opNames[] = (String[])ar.result;
  
                      if (opNames != null && opNames.length >= 3) {
+-                         mNewSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
 +                        // BEGIN privacy additions
 +                        if(pSetMan != null && settings != null && settings.getNetworkInfoSetting() != PrivacySettings.REAL){
 +                        	mNewSS.setOperatorName ("", "", "");
 +                        }
 +                        else{
-                         	mNewSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
-                         }
++                        	mNewSS.setOperatorName (opNames[0], opNames[1], opNames[2]);
++                        }
 +                        // END privacy
-+                    }
+                     }
                      break;
                  }
- 
 @@ -1093,7 +1149,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
          }
  
