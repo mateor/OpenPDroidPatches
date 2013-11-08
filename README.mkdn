@@ -1,13 +1,13 @@
-## OpenPdroid v1.0.1 for Android 4.3
+## OpenPdroid v1.0.1 for Android 4.4
 
 
-These are the current build patches for Android 4.3 and should generally reflect the
-current state of the _jb-mr2-release-openpdroid_ branch.
-The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches.
+These are the current build patches for Android 4.4 and should generally reflect the
+current state of the _android-4.4_r1-openpdroid_ branch.
+The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches. Bleeding edge development is comin slowly these days, no one realizes this more than me. If you think community driven security is a good thing, you are encouraged to contribute.
 
-There are ```apply``` and ```remove``` patch scripts available that I use personally over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
+There are ```apply``` and ```remove``` patch scripts available that I personally use over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
 
-__These build patches should work for most roms. As of their creation (1/17/13) they applied cleanly to AOKP, AOSP, Cyanogenmod, ParanoidAndroid and others.__
+__These build patches should work for most roms. I try and maintain them to apply cleanly to almost all AOSP-derived firmware (CyanogenMod, AOKP, ParanoidAndroid, SlimRom, etc.)
 
 
 To Apply
