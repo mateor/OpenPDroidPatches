@@ -2,8 +2,9 @@
 
 
 These are the current build patches for Android 4.4 and should generally reflect the
-current state of the _android-4.4_r1-openpdroid_ branch.
-The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches. Bleeding edge development is comin slowly these days, no one realizes this more than me. If you think community driven security is a good thing, you are encouraged to contribute.
+current state of the **android-4.4_r1-openpdroid** branch. I made the switch back to creating patches off of tags with Android 4.3, now the naming reflects that. If a tag comes out that significantly breaks the patches, then a new branch will be created.
+
+The latest commits are not always reflected in the build patches, bleeding-edge development is in the _-devel_ branches. Bleeding edge development is coming slowly these days, no one realizes this more than me. If you think community driven security is a good thing, you are encouraged to contribute.
 
 There are ```apply``` and ```remove``` patch scripts available that I personally use over at [my personal github page](https://github.com/mateor/patchScripts). A couple of those scripts also create [auto-patcher](https://www.github.com/mateor/auto-patcher) patches, but the apply/remove scripts could be helpful to anyone reading this.
 
